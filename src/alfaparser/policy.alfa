@@ -1,0 +1,44 @@
+namespace VaccineDispatch {
+ 
+    import Oasis.Attributes.*
+
+    attribute Country{id="Country" category=environmentCat type=string}
+    attribute Company{id="Company" category=environmentCat type=string}
+ 
+    condition isMedicalHub Role=="MedicalHub" and Country=="Italy"
+    condition cond Country=="Italy" and (Role=="Professor" or (Role=="Student" and Company=="Sapienza"))
+
+    category AggregationSpecCat = "VaccineDispatch.AggregationSpec"
+    obligation AggregationSpec = "VaccineDispatch.AggregationSpec"
+    attribute meanAge{id="meanAge" category=AggregationSpecCat type=string}
+    attribute sumAge{id="sumAge" category=AggregationSpecCat type=string}
+ 
+    policy PatientPrioritizationWithAggr {
+        target clause Action=="PatientPrioritizationWithAggr(Patient,meanAge,sumAge)"
+    
+        apply denyUnlessPermit
+    
+        rule accessDecision {
+            permit
+            condition isMedicalHub 
+        } 
+
+        on permit {
+            obligation AggregationSpec {
+                meanAge = "filteredPatients: Patient[ConsentFormSigned = true and contains(FamilyMedicalHistory, 'Heart Disease') and (Age <= 38 or (Age > 40 and contains(PreExistingConditions, 'Diabetes'))) and contains(PreviousVaccinations, 'COVID-19')], meanAge: mean(filteredPatients.Age)"
+                sumAge  = "filteredPatients: Patient[ConsentFormSigned = true], sumAge: sum(filteredPatients.Age)"
+            } 
+        }
+    }
+
+    policy WritePatientData {
+        target clause Action=="WritePatientData(Patient,IPNS)"
+        
+        apply denyUnlessPermit
+
+        rule accessWrite {
+            permit
+            condition cond
+        }
+    }
+}   
