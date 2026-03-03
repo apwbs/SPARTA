@@ -1,0 +1,51 @@
+[
+    {
+        "FullName": "Joseph Camacho",
+        "DateOfBirth": "1957-08-13",
+        "Age": 67,
+        "Gender": "Male",
+        "PhoneNumber": "585-576-4186",
+        "Email": "joseph.camacho@example.org",
+        "Address": "8174 West Cliffs Apt. 612\nLake Kevin, PA 43090",
+        "IdentificationNumber": 378030977,
+        "PreExistingConditions": [
+            "Asthma"
+        ],
+        "CurrentMedications": [
+            "Albuterol"
+        ],
+        "PreviousVaccinations": [],
+        "FamilyMedicalHistory": [
+            "Parkinson's Disease",
+            "Cancer"
+        ],
+        "ConsentFormSigned": true,
+        "InformedConsentDocument": true,
+        "PrivacyAgreement": true,
+        "Height": 200,
+        "Weight": 86,
+        "BloodType": "O-",
+        "Ethnicity": "Other",
+        "MaritalStatus": "Divorced",
+        "Occupation": "Artist",
+        "EducationLevel": "PhD",
+        "AnnualIncome": 28647,
+        "SmokingStatus": "Former Smoker",
+        "AlcoholConsumption": "Occasional",
+        "ExerciseFrequency": "Daily",
+        "Diet": "High Carb",
+        "TravelHistory": [
+            "South America"
+        ],
+        "EmergencyContactName": "Matthew Aguirre",
+        "EmergencyContactPhone": "+1-924-448-8579x591",
+        "InsuranceProvider": "Aetna",
+        "PrimaryCarePhysician": "Steven Boyer",
+        "LastPhysicalExamDate": "2025-01-28",
+        "OrganDonorStatus": true,
+        "BloodPressure": "135/74",
+        "CholesterolLevel": "High",
+        "BodyMassIndex": 28.8,
+        "ID": 1
+    }
+]

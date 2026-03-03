@@ -1,0 +1,40 @@
+{
+ "exe": "main",
+ "key": "private.pem",
+ "debug": true,
+ "heapSize": 512,
+ "executableHeap": false,
+ "productID": 1,
+ "securityVersion": 1,
+ "mounts": [
+		{
+			"source": "./privkey",
+			"target": "/privkey",
+			"type": "hostfs",
+			"readOnly": false
+		},
+		{
+			"source": "./certificate",
+			"target": "/certificate",
+			"type": "hostfs",
+			"readOnly": false
+		},
+		{
+			"source": "./seed",
+			"target": "/seed",
+			"type": "hostfs",
+			"readOnly": false
+		}
+	],
+ "env": null,
+ "files": [
+		{
+			"source": "../certauth/pubkey/ca_cert.pem",
+			"target": "../certauth/pubkey/ca_cert.pem"
+		},
+		{
+			"source": "../tee/pubkey/publicKey.pem",
+			"target": "../tee/pubkey/publicKey.pem"
+		}
+	]
+}

@@ -1,0 +1,786 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:biodi="http://bpmn.io/schema/dmn/biodi/2.0" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="Definitions_1a2f3le" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Web Modeler" exporterVersion="fc945f5" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0">
+  <decision id="Decision_nogltoj" name="Patient priority">
+    <informationRequirement id="InformationRequirement_0n411u1">
+      <requiredInput href="#InputData_0oibox9" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_1x5p1vk">
+      <requiredInput href="#InputData_11fj34g" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_1htwj9q">
+      <requiredInput href="#InputData_1c809b5" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_00fhksf">
+      <requiredInput href="#InputData_1qdzhw1" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_0sarzba">
+      <requiredInput href="#InputData_0w49nft" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_1dqat2o">
+      <requiredInput href="#InputData_1hyqwyg" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_00sff55">
+      <input id="Input_1" label="Age">
+        <inputExpression id="InputExpression_1" typeRef="number">
+          <text>Age</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_02bbntn" label="PreExistingConditions" biodi:width="192">
+        <inputExpression id="LiteralExpression_0xtevk4" typeRef="string">
+          <text>PreExistingConditions</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_068xgku" label="CurrentMedications">
+        <inputExpression id="LiteralExpression_0uf7i74" typeRef="string">
+          <text>CurrentMedications</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_0inwvop" label="PreviousVaccinations">
+        <inputExpression id="LiteralExpression_1h65wcz" typeRef="string">
+          <text>PreviousVaccinations</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_0n9l287" label="FamilyMedicalHistory">
+        <inputExpression id="LiteralExpression_1xbpozt" typeRef="string">
+          <text>FamilyMedicalHistory</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_1cjkuke" label="ConsentFormSigned">
+        <inputExpression id="LiteralExpression_0l8xvzl" typeRef="boolean">
+          <text>ConsentFormSigned</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="Priority1" name="Priority1" typeRef="string" />
+      <output id="OutputClause_1g1sqkp" label="Priority4" name="Priority4" typeRef="number" />
+      <output id="OutputClause_0lbfqgo" label="Priority2" name="Priority2" typeRef="string" />
+      <output id="OutputClause_0qilznf" label="Priority3" name="Priority3" typeRef="number" />
+      <output id="OutputClause_03u6yvz" label="Priority5" name="Priority5" typeRef="boolean" />
+      <rule id="DecisionRule_1hqygw9">
+        <inputEntry id="UnaryTests_0x9h1wl">
+          <text>&gt;=60</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1fsifol">
+          <text>"Asthma","Diabetes"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1fzq3ep">
+          <text>"Metformin","Albuterol","Lisinopril"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_07nshy3">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0t96vf5">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_17etn1p">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_10qn19r">
+          <text>"High"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_12zh1xw">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0ga74lh">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0oin6iw">
+          <text>1</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1ymq20k">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0ju2o0s">
+        <inputEntry id="UnaryTests_1f4s88a">
+          <text>&gt;=60</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_05mujfr">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_15app5n">
+          <text>"Metformin","Albuterol","Lisinopril"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0ox5eh9">
+          <text>"COVID-19","Influenza"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1oyp1ze">
+          <text>"Diabetes","Heart Disease"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1frz0bf">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_01909qh">
+          <text>"High"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1kprkzi">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0uicd2l">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1wluhqr">
+          <text>2</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1lfynue">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0291dl4">
+        <inputEntry id="UnaryTests_1rftpho">
+          <text>&gt;=60</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1m2md1b">
+          <text>"Asthma","Diabetes"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_01gsmlo">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0chcg94">
+          <text>"COVID-19","Influenza"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_01m8nc2">
+          <text>"Diabetes","Heart Disease"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0wkt08m">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1h4ofad">
+          <text>"High"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0rvhm30">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_018ey7g">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1pmzys7">
+          <text>3</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_03zqnj8">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0nb6zif">
+        <inputEntry id="UnaryTests_0ziy9zg">
+          <text>&gt;=60</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0aogzka">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1ltplpj">
+          <text>"Metformin","Albuterol","Lisinopril"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1n2qekm">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0xlpq30">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_14yvp58">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_08fzvym">
+          <text>"High"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0i6v41b">
+          <text>5.2</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1fhpk2i">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1ufrbvs">
+          <text>4</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0d1t32u">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_12v30rs">
+        <inputEntry id="UnaryTests_06m5uy3">
+          <text>&gt;=60</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_07as3md">
+          <text>"Asthma","Diabetes"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0dw4pp0">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_10pw1ra">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0oi5scz">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_02m4fg4">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1c1yahd">
+          <text>"High"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_15evfu4">
+          <text>51</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0akr8fr">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_01u6ilq">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0epase3">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_05dt2fx">
+        <inputEntry id="UnaryTests_05045uo">
+          <text>&gt;=60</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_12h3syt">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1fwnp4s">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0gpyczl">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0vzmk7x">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1uvu73q">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1wqe7lv">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1byvovq">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1m4ie9k">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1dbk56u">
+          <text>6</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1yn86ck">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1cgt755">
+        <inputEntry id="UnaryTests_0hfa63x">
+          <text>[18..60[</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_001hh39">
+          <text>"Asthma","Diabetes"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1qsa5ay">
+          <text>"Metformin","Albuterol","Lisinopril"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0ds28jg">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1pj6ohe">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1wh2vdj">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_02lu05i">
+          <text>"High"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1b4s1l1">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_08yhp8b">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_05hv6m3">
+          <text>7</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0uksneq">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0snmimx">
+        <inputEntry id="UnaryTests_1r9lgou">
+          <text>[18..60[</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0otk40r">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0gdyj96">
+          <text>"Metformin","Albuterol","Lisinopril"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0teebsk">
+          <text>"COVID-19","Influenza"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1qxojns">
+          <text>"Diabetes","Heart Disease"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_02e8n5m">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_02obdy9">
+          <text>"Medium"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1jzcmck">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_02dxwpz">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_05vdjdn">
+          <text>8</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_02lohnp">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_01vg9wu">
+        <inputEntry id="UnaryTests_19sd4oa">
+          <text>[18..60[</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_01u8txh">
+          <text>"Asthma","Diabetes"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0wmh5bn">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1pytzzf">
+          <text>"COVID-19","Influenza"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0k2ii5d">
+          <text>"Diabetes","Heart Disease"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_104x3ko">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1s7a33i">
+          <text>"Medium"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1apnff9">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_083ijph">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0xph100">
+          <text>9</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0h45kbn">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1klj8ya">
+        <inputEntry id="UnaryTests_1hv1684">
+          <text>[18..60[</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_04uo765">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1kpk5lc">
+          <text>"Metformin","Albuterol","Lisinopril"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1ph0giv">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1xqyrbo">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0acm6i5">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_04b1wwv">
+          <text>"Medium"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_02ioobi">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_17iyxpb">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0p7wsmz">
+          <text>8</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_05jn0ve">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1q993x1">
+        <inputEntry id="UnaryTests_1stlcvt">
+          <text>[18..60[</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_04h78xp">
+          <text>"Asthma","Diabetes"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1qcgvii">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1lgz7iu">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_16ifypk">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_03upjva">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1y98ds7">
+          <text>"Medium"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0vz08rq">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_17tw482">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0u92cgt">
+          <text>8</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_08ku4bb">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0123ivq">
+        <inputEntry id="UnaryTests_11l75v5">
+          <text>[18..60[</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1395jb7">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1j8hfmv">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0ca0etg">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1bkxc8c">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_19q6co3">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0ivjqly">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1cbt7br">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1hki6e1">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0v367qp">
+          <text>8</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1lfi9ey">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_10rqey3">
+        <inputEntry id="UnaryTests_0x99jyz">
+          <text>&lt;18</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1frkwdh">
+          <text>"Asthma","Diabetes"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1451v88">
+          <text>"Metformin","Albuterol","Lisinopril"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1bh3d5y">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0bz9vit">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1yqt1gm">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0mgprje">
+          <text>"Medium"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_12v1l1t">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0dowsrq">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_17ydxkc">
+          <text>8</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1xnd462">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_020ts59">
+        <inputEntry id="UnaryTests_05b6nzo">
+          <text>&lt;18</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1415vce">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0dr39ko">
+          <text>"Metformin","Albuterol","Lisinopril"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1t8lfhr">
+          <text>"COVID-19","Influenza"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1n2un9w">
+          <text>"Diabetes","Heart Disease"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1jbount">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0jqtdsh">
+          <text>"Medium"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0z4dlla">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1qg04mx">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1nqzpsn">
+          <text>8</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1lpyes5">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0svl00i">
+        <inputEntry id="UnaryTests_0k3mttj">
+          <text>&lt;18</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_09lx2qr">
+          <text>"Asthma","Diabetes"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0o0wfft">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_029q8bc">
+          <text>"COVID-19","Influenza"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0qqf2kz">
+          <text>"Diabetes","Heart Disease"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0pjeaij">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1jlvsir">
+          <text>"Medium"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0oklyx3">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1pkps29">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_08r93gb">
+          <text>8</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_05vcou9">
+          <text>false</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1kpy55q">
+        <inputEntry id="UnaryTests_0gt7mue">
+          <text>&lt;18</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0j5ja9n">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_09zn687">
+          <text>"Metformin","Albuterol","Lisinopril"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1hvvc71">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0x7wajh">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1gka7d9">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_18p8cr0">
+          <text>"Medium"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0ol6jep">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0gkv0t4">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1x1zet3">
+          <text>8</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1a1zhmn">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0ldhup8">
+        <inputEntry id="UnaryTests_0id9f5l">
+          <text>&lt;18</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0xa9zp5">
+          <text>"Asthma","Diabetes"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_11w6v8u">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0qq4hra">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_17tj2mn">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1iveh63">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0ln5bve">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_17gmhql">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1srvxlg">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_04kydzo">
+          <text>8</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1x6thuz">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1klf5lx">
+        <inputEntry id="UnaryTests_0yeuriz">
+          <text>&lt;18</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_03hxepg">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1xqjvod">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0v17p73">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1b4uj7c">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0ld014v">
+          <text>true</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_05cq696">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0oiiksz">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_04m2v5f">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1trjzj7">
+          <text>8</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0ph3y34">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0gomjv1">
+        <inputEntry id="UnaryTests_0qe07vv">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0jbagjh">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1ihfu5o">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1jfkf2a">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0ffngis">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_09088r2">
+          <text>false</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1vl9bdx">
+          <text>"Ineligible"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_10xniy4">
+          <text>9.4</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1onp5rz">
+          <text>"Low"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0ycmfem">
+          <text>8</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1519o2d">
+          <text>true</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <inputData id="InputData_0oibox9" name="Age" />
+  <inputData id="InputData_11fj34g" name="PreExistingConditions" />
+  <inputData id="InputData_1c809b5" name="PreviousVaccinations" />
+  <inputData id="InputData_1qdzhw1" name="FamilyMedicalHistory" />
+  <inputData id="InputData_0w49nft" name="ConsentFormSigned" />
+  <inputData id="InputData_1hyqwyg" name="CurrentMedications" />
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="Decision_nogltoj">
+        <dc:Bounds height="80" width="180" x="470" y="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_0jnapvz" dmnElementRef="InputData_0oibox9">
+        <dc:Bounds height="45" width="125" x="158" y="278" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_09w6ecd" dmnElementRef="InputData_11fj34g">
+        <dc:Bounds height="45" width="125" x="307" y="278" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_095gfx3" dmnElementRef="InputData_1c809b5">
+        <dc:Bounds height="45" width="125" x="587" y="278" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_04gibz9" dmnElementRef="InputData_1qdzhw1">
+        <dc:Bounds height="45" width="125" x="727" y="278" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_0t3zpuy" dmnElementRef="InputData_0w49nft">
+        <dc:Bounds height="45" width="125" x="878" y="278" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_07kv6d6" dmnElementRef="InformationRequirement_0n411u1">
+        <di:waypoint x="221" y="278" />
+        <di:waypoint x="496" y="180" />
+        <di:waypoint x="496" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_0cnhorl" dmnElementRef="InformationRequirement_1x5p1vk">
+        <di:waypoint x="370" y="278" />
+        <di:waypoint x="521" y="180" />
+        <di:waypoint x="521" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_0yv0nup" dmnElementRef="InformationRequirement_1htwj9q">
+        <di:waypoint x="650" y="278" />
+        <di:waypoint x="573" y="180" />
+        <di:waypoint x="573" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_0nh2kek" dmnElementRef="InformationRequirement_00fhksf">
+        <di:waypoint x="790" y="278" />
+        <di:waypoint x="599" y="180" />
+        <di:waypoint x="599" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_0u12rh8" dmnElementRef="InformationRequirement_0sarzba">
+        <di:waypoint x="941" y="278" />
+        <di:waypoint x="624" y="180" />
+        <di:waypoint x="624" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="DMNShape_1dva07g" dmnElementRef="InputData_1hyqwyg">
+        <dc:Bounds height="45" width="125" x="447" y="278" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_1aacg6v" dmnElementRef="InformationRequirement_1dqat2o">
+        <di:waypoint x="510" y="278" />
+        <di:waypoint x="547" y="180" />
+        <di:waypoint x="547" y="160" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>
