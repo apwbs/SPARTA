@@ -110,7 +110,7 @@ func StartTEE(exchangeSeed bool) *USGonServerReceiver {
 	})
 
 	// Seed exchange endpoint (gated inside handleKey)
-	handler.HandleFunc("/secret", handleKey)
+	handler.HandleFunc("/secret", s.handleKey)
 
 	tlsCfg := tls.Config{
 		Certificates: []tls.Certificate{
@@ -148,13 +148,14 @@ func (s *USGonServerReceiver) Stop() {
 	if s == nil || s.server == nil {
 		return
 	}
+	fmt.Println("Stopping TEE server receiver...")
 	_ = s.server.Close()
 }
 
 // -------------------------
 // Seed exchange receiver
 // -------------------------
-func handleKey(w http.ResponseWriter, r *http.Request) {
+func (s *USGonServerReceiver) handleKey(w http.ResponseWriter, r *http.Request) {
 	// Gate seed exchange endpoint
 	if !seedExchangeEnabled {
 		http.Error(w, "Seed exchange disabled (run with -exchange_seed)", http.StatusForbidden)
@@ -176,7 +177,6 @@ func handleKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse multipart form data
 	mr, err := r.MultipartReader()
 	if err != nil {
 		fmt.Println("Error creating multipart reader:", err)
@@ -185,7 +185,6 @@ func handleKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var seedBytes []byte
-
 	for {
 		part, err := mr.NextPart()
 		if err == io.EOF {
@@ -231,7 +230,16 @@ func handleKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Respond first
 	_, _ = w.Write([]byte("Seed stored successfully"))
+
+	// Flush if possible (helps avoid cutting the connection)
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
+
+	// Then stop the HTTPS server so Start() returns and main unblocks on <-done
+	go s.Stop()
 }
 
 // -------------------------
@@ -296,7 +304,7 @@ func readQueue() {
 
 func handleFunction(functionName string, payload map[string]string) string {
 	switch functionName {
-	case "PatientPrioritizationWithAggr":
+	case "PriorityRE":
 		return decidePatientPrioritizationWithAggrHandler(payload)
 	case "setWritePatientData":
 		return setWritePatientDataHandler(payload)
