@@ -22,8 +22,8 @@ import (
 )
 
 func ExecuteTransaction() (contractInstance *contract.Contract, client *ethclient.Client, err error) {
-	ethereumNodeURL := "HTTP://127.0.0.1:8545"
-	contractAddress := "0xbCdAceB705e2E576127DcdEd134d459D44C6a343"
+	ethereumNodeURL := "HTTP://127.0.0.1:7545"
+	contractAddress := "0x225a676dfe1c104369F0622BEE8aFCbFD2436856"
 
 	pemCert, err := os.ReadFile("ca/certificate.pem")
 
@@ -60,7 +60,7 @@ func hexToECDSA(privateKey string) (*ecdsa.PrivateKey, error) {
 func SetDocument(messageID int64, functionName, ipfsHash string) error {
 	contractInstance, client, _ := ExecuteTransaction()
 
-	privateKey := "3429d1a2c8c923d12ae254f8ee270a51326355bbcce902d87b622daba211fcbe"
+	privateKey := "0x70fe281af5b213e0926dc1d25a80686f3b672370845a16d5e5a072ca611ed3ad"
 
 	var functionNameBytes [32]byte
 	copy(functionNameBytes[:], functionName)
