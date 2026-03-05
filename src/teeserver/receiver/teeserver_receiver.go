@@ -294,9 +294,9 @@ func readQueue() {
 			"response":  response,
 		})
 		if err := redisClient.LPush(redisClient.Context(), responseQueue, responsePayload).Err(); err != nil {
-			fmt.Printf("[Server] Error enqueuing response: %!v(MISSING)\n", err)
+			fmt.Printf("[Server] Error enqueuing response: %v\n", err)
 		} else {
-			fmt.Printf("[Server] Enqueued response for client: %!s(MISSING)\n", payload.ClientID)
+			fmt.Printf("[Server] Enqueued response for client: %s\n", payload.ClientID)
 			fmt.Println("----------------------------------------------------------------------------------------------------------------------------")
 		}
 	}
@@ -331,7 +331,8 @@ func setWritePatientDataHandler(payload map[string]string) string {
 	certificate, _, fileBytes, _, ipnsKey, _ := interfaceISGoMiddleware.ParseSetRequestFromQueueBytes(payload)
 	certificateValidity, attributes := interfaceISGoMiddleware.CheckCertificate(certificate)
 	if certificateValidity {
-		callable := interfaceISGoMiddleware.CheckCallability(`{accessPolicy: (Country = "Italy" and (Role = "Professor" or (Role = "Student" and Company = "Sapienza")))}`, attributes)
+		// callable := interfaceISGoMiddleware.CheckCallability(`{accessPolicy: (Country = "Italy" and (Role = "Professor" or (Role = "Student" and Company = "Sapienza")))}`, attributes)
+		callable := interfaceISGoMiddleware.CheckCallability(`{accessPolicy: (Role = "MedicalHub" and Country = "Italy")}`, attributes)
 		if callable {
 			interfaceISGoMiddleware.EncryptAndUploadLinkedBytes(fileBytes, "Patient", ipnsKey)
 			interfaceISGoMiddleware.EncryptAndUploadLinkedBytes(fileBytes, "PatientLight", ipnsKey+"Light")

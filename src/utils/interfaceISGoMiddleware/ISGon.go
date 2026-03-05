@@ -631,7 +631,7 @@ func DecryptLinkedLog(keyName, structName string) ([]interface{}, time.Duration,
 		return nil, 0, fmt.Errorf("failed to resolve IPNS head for key %s: %v", keyName, err)
 	}
 
-	fmt.Println("Starting decryption from head CID:", cid)
+	// fmt.Println("Starting decryption from head CID:", cid)
 
 	structType, ok := structs.StructRegistry[structName]
 	if !ok {
@@ -645,7 +645,7 @@ func DecryptLinkedLog(keyName, structName string) ([]interface{}, time.Duration,
 
 	for cid != "" {
 		batchCounter++
-		fmt.Printf("Reading batch #%d at CID: %s\n", batchCounter, cid)
+		// fmt.Printf("Reading batch #%d at CID: %s\n", batchCounter, cid)
 
 		data, err := ipfs.FetchDataFromIPFS(sh, cid)
 		if err != nil {
@@ -660,8 +660,8 @@ func DecryptLinkedLog(keyName, structName string) ([]interface{}, time.Duration,
 		if err := json.Unmarshal(data, &rawBatch); err != nil {
 			return nil, 0, fmt.Errorf("failed to unmarshal batch %s: %v", cid, err)
 		}
-		fmt.Printf("Batch #%d contains %d encrypted entries\n", batchCounter, len(rawBatch.Entries))
-		fmt.Printf("Previous CID: %s\n", rawBatch.Previous)
+		// fmt.Printf("Batch #%d contains %d encrypted entries\n", batchCounter, len(rawBatch.Entries))
+		// fmt.Printf("Previous CID: %s\n", rawBatch.Previous)
 
 		for _, raw := range rawBatch.Entries {
 			var enc EncryptedData
@@ -697,14 +697,27 @@ func DecryptLinkedLog(keyName, structName string) ([]interface{}, time.Duration,
 		total += t
 	}
 	fmt.Printf("Total decryption time: %v\n", total)
-	fmt.Printf("Average decryption time: %v\n", total/time.Duration(len(decryptionTimes)))
-	fmt.Printf("Entry index: %d\n", entryIndex)
+	// fmt.Printf("Average decryption time: %v\n", total/time.Duration(len(decryptionTimes)))
+	// fmt.Printf("Entry index: %d\n", entryIndex)
 
 	// fmt.Printf("Decryption time: %s\n", time.Since(startDecryption))
-	fmt.Printf("Finished decrypting %d entries across %d batches.\n", len(results), batchCounter)
+	// fmt.Printf("Finished decrypting %d entries across %d batches.\n", len(results), batchCounter)
 
 	// slices.Reverse(results)
 	return results, total, nil
+}
+
+func printRecordAsJSON(v any, maxBytes int) {
+    b, err := json.MarshalIndent(v, "", "  ")
+    if err != nil {
+        fmt.Println("Cannot marshal record to JSON:", err)
+        return
+    }
+    if maxBytes > 0 && len(b) > maxBytes {
+        fmt.Printf("%s...\n(truncated, %d bytes total)\n", b[:maxBytes], len(b))
+        return
+    }
+    fmt.Println(string(b))
 }
 
 func RetrieveStructSliceLinkedLog(structName, keyName string) (interface{}, time.Duration, error) {
@@ -716,34 +729,7 @@ func RetrieveStructSliceLinkedLog(structName, keyName string) (interface{}, time
 
 	fmt.Printf("Decrypted %d records for %s\n", len(records), structName)
 
-	if len(records) > 0 {
-		// Use reflection to count the number of fields in the first record
-		first := reflect.ValueOf(records[0])
-		if first.Kind() == reflect.Ptr {
-			first = first.Elem() // Dereference pointer if needed
-		}
-		if first.Kind() == reflect.Struct {
-			numFields := first.NumField()
-			fmt.Printf("Each record has %d fields\n", numFields)
-		} else {
-			fmt.Println("Warning: First record is not a struct")
-		}
-
-		// Estimate memory size
-		elementSize := unsafe.Sizeof(records[0])
-		estimatedSize := int(elementSize) * len(records)
-		fmt.Printf("Estimated memory usage: %d bytes (%d × ~%d bytes)\n", estimatedSize, len(records), int(elementSize))
-	} else {
-		fmt.Println("No records found")
-	}
-
 	return records, decryptionTime, nil
-}
-
-func SetMemoryVariable(TEST_MODE bool) {
-	// Set the global variable TEST_MODE
-	TESTMODE = TEST_MODE
-	// fmt.Println("TESTMODE set to:", TEST_MODE)
 }
 
 func Decision(functionName, structName, ipnsKey string) string {
@@ -760,16 +746,6 @@ func Decision(functionName, structName, ipnsKey string) string {
 	if structSlice.Kind() != reflect.Slice {
 		fmt.Println("Error: structSlice is not a slice")
 		return "error: structSlice is not a slice"
-	}
-
-	fmt.Printf("Final struct slice contains %d elements\n", structSlice.Len())
-	if structSlice.Len() > 0 {
-		elementSize := unsafe.Sizeof(structSlice.Index(0).Interface())
-		estimatedSize := int(elementSize) * structSlice.Len()
-		fmt.Printf("📏 Estimated memory usage of final slice: %d bytes (%d × ~%d bytes)\n",
-			estimatedSize, structSlice.Len(), int(elementSize))
-	} else {
-		fmt.Println("📭 Final struct slice is empty")
 	}
 
 	// Lookup receiver for this decision
@@ -792,15 +768,8 @@ func Decision(functionName, structName, ipnsKey string) string {
 
 // Helper function to execute the method dynamically
 func executeMethod(method reflect.Value, structSlice reflect.Value, ipnsKey, functionName string, decryptionTime time.Duration) string {
-	if TESTMODE {
-		fmt.Println("MEMORYTESTMODE - TEE PRE-ALLOCATING LIST AT:", time.Now().UnixMilli())
-	}
 	// Pre-allocate a list to store prepared args
 	argsList := make([][]reflect.Value, structSlice.Len()) // Each element is a slice of reflect.Value
-
-	if TESTMODE {
-		fmt.Println("MEMORYTESTMODE - TEE PREPARING ARGUMENTS AT:", time.Now().UnixMilli())
-	}
 
 	// First loop: Prepare args
 	for i := 0; i < structSlice.Len(); i++ {
@@ -814,18 +783,6 @@ func executeMethod(method reflect.Value, structSlice reflect.Value, ipnsKey, fun
 			continue // Skip this iteration if there's an error
 		}
 
-		// for k, v := range inputs {
-		// 	if strings.Contains(k, ".") && (v == "" || v == nil) {
-		// 		delete(inputs, k)
-		// 	}
-		// }
-
-		// // Print the full input map contents
-		// fmt.Println("Inputs for struct element", i, ":")
-		// for k, v := range inputs {
-		// 	fmt.Printf("  - %s: %v\n", k, v)
-		// }
-
 		// Store the args for this input
 		inputValue := reflect.ValueOf(inputs)
 		if inputValue.IsValid() {
@@ -833,63 +790,21 @@ func executeMethod(method reflect.Value, structSlice reflect.Value, ipnsKey, fun
 		}
 	}
 
-	fmt.Println("len of argsList:", len(argsList))
-
-	if TESTMODE {
-		fmt.Println("MEMORYTESTMODE - TEE DECIDING AT:", time.Now().UnixMilli())
-	}
-
 	// Second loop: Measure time for calling the function
 	start111 := time.Now()
-	for i := 0; i < len(argsList); i++ {
-		_ = method.Call(argsList[i])
-	}
 	// for i := 0; i < len(argsList); i++ {
-	// 	fmt.Printf("Result for input #%d:\n", i)
-	// 	results := method.Call(argsList[i])
-	// 	for j, result := range results {
-	// 		fmt.Printf("  [%d] %v\n", j, result.Interface())
-	// 	}
-	// 	fmt.Println(strings.Repeat("-", 40))
+	// 	_ = method.Call(argsList[i])
 	// }
+	for i := 0; i < len(argsList); i++ {
+		fmt.Printf("Result for input #%d:\n", i)
+		results := method.Call(argsList[i])
+		for j, result := range results {
+			fmt.Printf("  [%d] %v\n", j, result.Interface())
+		}
+		fmt.Println(strings.Repeat("-", 40))
+	}
 	elapsed111 := time.Since(start111)
 	fmt.Printf("Total time taken for method.Call(args): %s\n", elapsed111)
-
-	fmt.Println("len of structSlice:", structSlice.Len())
-
-	parts := strings.Split(ipnsKey, "_")
-	// numColumns, _ := strconv.Atoi(parts[2])
-	numColumns, _ := strconv.Atoi(strings.TrimSuffix(parts[1], "Light"))
-	fmt.Println("numColumns:", numColumns)
-
-	structSliceLen := structSlice.Len()
-	resultValueCheck := structSliceLen == numColumns
-
-	red := "\033[31m"
-	reset := "\033[0m"
-
-	fmt.Println(red+"len of struct equal to number of rows of the key:"+reset, strconv.FormatBool(resultValueCheck))
-
-	// lastIndex := structSlice.Len() - 1
-	// checkValue := structSlice.Index(lastIndex)
-
-	// // Ensure the value is addressable (not a pointer)
-	// if checkValue.Kind() == reflect.Ptr {
-	// 	checkValue = checkValue.Elem()
-	// }
-
-	// // fmt.Println("Last Value in structSlice (Fields & Values):")
-
-	// // Loop through struct fields and print names with values
-	// for i := 0; i < checkValue.NumField(); i++ {
-	// 	field := checkValue.Type().Field(i).Name
-	// 	value := checkValue.Field(i).Interface()
-	// 	fmt.Printf("  - %s: %v\n", field, value)
-	// }
-
-	// Log execution time
-	isgonHelper.LogExecutionTimeToCSV(structSlice.Interface(), elapsed111, decryptionTime, ipnsKey, functionName, strconv.FormatBool(resultValueCheck))
-	// isgonHelper.LogExecutionTimeToCSVCardApproval(structSlice.Interface(), elapsed111, decryptionTime, ipnsKey, functionName, strconv.FormatBool(resultValueCheck))
 
 	fmt.Println("----------------------------------------------------------------------------------------------------------------------------")
 
