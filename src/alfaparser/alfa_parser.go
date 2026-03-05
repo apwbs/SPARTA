@@ -86,7 +86,7 @@ func main() {
 	code := GenerateHandlers(policySet)
 
 	// Write output
-	outputFilePath := "../teeserver/receiver/teeserver_receiver.go"
+	outputFilePath := "file.go"
 	outFile, err := os.Create(outputFilePath)
 	if err != nil {
 		fmt.Println("Error creating file:", err)
@@ -424,7 +424,7 @@ func typeFromRuleName(ruleName string) string {
 func translateConditionToFEEL(condition string) string {
 	cond := strings.TrimSpace(condition)
 	cond = strings.TrimSuffix(cond, ";")
-	cond = strings.ReplaceAll(cond, "==", "=")
+	cond = strings.ReplaceAll(cond, "==", " = ")
 
 	for strings.Contains(cond, "  ") {
 		cond = strings.ReplaceAll(cond, "  ", " ")
