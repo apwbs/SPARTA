@@ -26,7 +26,6 @@ import (
 	seedGeneration "sparta/src/utils/seedGenerator"
 	structs "sparta/src/utils/structures"
 	"time"
-	"unsafe"
 
 	"github.com/Knetic/govaluate"
 	shell "github.com/ipfs/go-ipfs-api"
@@ -455,6 +454,112 @@ func ParseSetRequestFromQueue(payload map[string]string) ([]byte, string, string
 	return certificate, functionName, fileString, fileExtension, ipnsKey, nil
 }
 
+func ParseSetRequestFromQueueBytes(payload map[string]string) ([]byte, string, []byte, string, string, error) {
+	// Extract fields from the payload
+	certificate := []byte(payload["certificate"])
+	encryptedInputDataBase64 := payload["encrypted_data"]
+	fileExtension := payload["file_extension"]
+	functionName := payload["function_name"]
+	ipnsKey := payload["ipns_key"]
+
+	functionName = strings.TrimPrefix(strings.TrimPrefix(string(functionName), "set"), "get")
+
+	// Parse the certificate
+	block, _ := pem.Decode(certificate)
+	if block == nil || block.Type != "CERTIFICATE" {
+		fmt.Println("Error decoding PEM certificate or invalid type")
+		return nil, "", nil, "", "", fmt.Errorf("invalid PEM certificate format")
+	}
+	parsedCert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		fmt.Printf("Error parsing certificate: %v\n", err)
+		return nil, "", nil, "", "", err
+	}
+
+	// Extract the ECDSA public key from the certificate
+	certPublicKey, ok := parsedCert.PublicKey.(*ecdsa.PublicKey)
+	if !ok {
+		fmt.Println("Certificate public key is not an ECDSA public key")
+		return nil, "", nil, "", "", fmt.Errorf("invalid public key type in certificate")
+	}
+
+	// Decode the client's public key from the payload
+	clientPublicKeyBytes, err := base64.StdEncoding.DecodeString(payload["client_public_key"])
+	if err != nil {
+		fmt.Printf("Error decoding client public key: %v\n", err)
+		return nil, "", nil, "", "", err
+	}
+
+	// Compute the hash of the client's public key (same as the client did)
+	hash := sha256.Sum256(clientPublicKeyBytes)
+
+	// Decode the ECDSA signature (r, s) from ASN.1 format
+	var signature struct {
+		R, S *big.Int
+	}
+	signatureBytes, err := base64.StdEncoding.DecodeString(payload["signature"])
+	if err != nil {
+		fmt.Printf("Error decoding signature: %v\n", err)
+		return nil, "", nil, "", "", err
+	}
+
+	if _, err := asn1.Unmarshal(signatureBytes, &signature); err != nil {
+		fmt.Printf("Error unmarshaling signature: %v\n", err)
+		return nil, "", nil, "", "", err
+	}
+
+	// Verify the signature using the public key extracted from the certificate
+	if !ecdsa.Verify(certPublicKey, hash[:], signature.R, signature.S) {
+		fmt.Println("Signature verification failed")
+		return nil, "", nil, "", "", fmt.Errorf("signature verification failed")
+	}
+
+	fmt.Println("Signature successfully verified using the certificate's public key")
+
+	// Decode encrypted input data
+	encryptedInputData, err := base64.StdEncoding.DecodeString(encryptedInputDataBase64)
+	if err != nil {
+		fmt.Printf("Error decoding encrypted input data: %v\n", err)
+		return nil, "", nil, "", "", err
+	}
+
+	// Generate deterministic server key
+	seedBytes := seedGeneration.GetKey()
+	serverPrivateKey, _, err := isgonHelper.GenerateDeterministicDHKeyPair(seedBytes)
+	if err != nil {
+		fmt.Printf("Error generating server private key: %v\n", err)
+		return nil, "", nil, "", "", err
+	}
+
+	// Reconstruct the client's public key
+	clientPublicKey, err := ecdh.X25519().NewPublicKey(clientPublicKeyBytes)
+	if err != nil {
+		fmt.Printf("Error reconstructing client public key: %v\n", err)
+		return nil, "", nil, "", "", err
+	}
+
+	// Compute shared secret
+	sharedSecret, err := serverPrivateKey.ECDH(clientPublicKey)
+	if err != nil {
+		fmt.Printf("Error computing shared secret: %v\n", err)
+		return nil, "", nil, "", "", err
+	}
+	fmt.Printf("Shared Secret: %x\n", sharedSecret)
+
+	// Derive symmetric key using SHA-256
+	symmetricKey := sha256.Sum256(sharedSecret)
+
+	// Decrypt the encrypted input data using the symmetric key
+	decryptedData, err := encryption.DecryptWithAESGCMClientInput(symmetricKey[:], encryptedInputData)
+	if err != nil {
+		fmt.Printf("Error decrypting input data: %v\n", err)
+		return nil, "", nil, "", "", err
+	}
+
+	return certificate, functionName, decryptedData, fileExtension, ipnsKey, nil
+}
+
+
 func ParseGetRequestFromQueue(payload map[string]string) ([]byte, string, int, error) {
 	// Extract fields from the payload
 	certificate := []byte(payload["certificate"])
@@ -507,7 +612,6 @@ type SimpleBatch struct {
 }
 
 func EncryptAndUploadLinkedBytes(fileBytes []byte, structName, ipnsKey string) {
-	fmt.Println("HEAVY ENCRYPTION")
 	sh := shell.NewShell("localhost:5001")
 
 	// Retrieve the publicKey from IPNS
@@ -516,7 +620,6 @@ func EncryptAndUploadLinkedBytes(fileBytes []byte, structName, ipnsKey string) {
 		fmt.Println("Error: could not retrieve IPNS key")
 		return
 	}
-
 	fmt.Println("IPNS Key Retrieved:", publicKeyIPNS)
 
 	// Step 1: Parse input data
@@ -538,17 +641,6 @@ func EncryptAndUploadLinkedBytes(fileBytes []byte, structName, ipnsKey string) {
 	if newStruct.Kind() != reflect.Slice {
 		fmt.Println("Error: Expected slice")
 		return
-	}
-
-	fmt.Printf("Parsed %d records from input JSON\n", newStruct.Len())
-	fmt.Printf("Raw input file size: %d bytes\n", len(fileBytes))
-
-	if newStruct.Len() > 0 {
-		elementSize := unsafe.Sizeof(newStruct.Index(0).Interface())
-		estimatedSize := int(elementSize) * newStruct.Len()
-		fmt.Printf("Parsed struct slice (approx size): %d bytes (%d elements of ~%d bytes each)\n", estimatedSize, newStruct.Len(), int(elementSize))
-	} else {
-		fmt.Println("Parsed slice is empty, size: 0 bytes")
 	}
 
 	// Step 2: Encrypt records
@@ -595,7 +687,6 @@ func EncryptAndUploadLinkedBytes(fileBytes []byte, structName, ipnsKey string) {
 		fmt.Println("Marshal error:", err)
 		return
 	}
-	fmt.Printf("Size of batch JSON: %d bytes\n", len(batchJSON))
 
 	// Upload to IPFS
 	cid, err := ipfs.UploadToIPFS(sh, batchJSON)
@@ -611,31 +702,26 @@ func EncryptAndUploadLinkedBytes(fileBytes []byte, structName, ipnsKey string) {
 		return
 	}
 	fmt.Println("IPNS now points to CID:", cid)
-
-	// isgonHelper.LogExecutionDetailsToCSV(len(batchJSON), newStruct.Len(), ipnsKey)
 }
 
-func DecryptLinkedLog(keyName, structName string) ([]interface{}, time.Duration, error) {
-	fmt.Println("HEAVY DECRYPTION")
+func DecryptLinkedLog(keyName, structName string) ([]interface{}, error) {
 	sh := shell.NewShell("localhost:5001")
 	var results []interface{}
 
 	publicKeyIPNS := ipfs.RetrieveKey(sh, keyName)
 	if publicKeyIPNS == "" {
-		return nil, 0, fmt.Errorf("failed to retrieve public key for keyName: %s", keyName)
+		return nil, fmt.Errorf("failed to retrieve public key for keyName: %s", keyName)
 	}
 
 	cid, err := ipfs.RetrieveFromIPNS(sh, publicKeyIPNS)
 	fmt.Println("CID from IPNS:", cid)
 	if err != nil || cid == "" {
-		return nil, 0, fmt.Errorf("failed to resolve IPNS head for key %s: %v", keyName, err)
+		return nil, fmt.Errorf("failed to resolve IPNS head for key %s: %v", keyName, err)
 	}
-
-	// fmt.Println("Starting decryption from head CID:", cid)
 
 	structType, ok := structs.StructRegistry[structName]
 	if !ok {
-		return nil, 0, fmt.Errorf("struct type %s not found in registry", structName)
+		return nil, fmt.Errorf("struct type %s not found in registry", structName)
 	}
 
 	seedBytes := seedGeneration.GetKey()
@@ -645,11 +731,10 @@ func DecryptLinkedLog(keyName, structName string) ([]interface{}, time.Duration,
 
 	for cid != "" {
 		batchCounter++
-		// fmt.Printf("Reading batch #%d at CID: %s\n", batchCounter, cid)
 
 		data, err := ipfs.FetchDataFromIPFS(sh, cid)
 		if err != nil {
-			return nil, 0, fmt.Errorf("failed to fetch CID %s: %v", cid, err)
+			return nil, fmt.Errorf("failed to fetch CID %s: %v", cid, err)
 		}
 
 		// Use json.RawMessage to defer allocation
@@ -658,10 +743,8 @@ func DecryptLinkedLog(keyName, structName string) ([]interface{}, time.Duration,
 			Entries  []json.RawMessage `json:"entries"`
 		}
 		if err := json.Unmarshal(data, &rawBatch); err != nil {
-			return nil, 0, fmt.Errorf("failed to unmarshal batch %s: %v", cid, err)
+			return nil, fmt.Errorf("failed to unmarshal batch %s: %v", cid, err)
 		}
-		// fmt.Printf("Batch #%d contains %d encrypted entries\n", batchCounter, len(rawBatch.Entries))
-		// fmt.Printf("Previous CID: %s\n", rawBatch.Previous)
 
 		for _, raw := range rawBatch.Entries {
 			var enc EncryptedData
@@ -697,14 +780,7 @@ func DecryptLinkedLog(keyName, structName string) ([]interface{}, time.Duration,
 		total += t
 	}
 	fmt.Printf("Total decryption time: %v\n", total)
-	// fmt.Printf("Average decryption time: %v\n", total/time.Duration(len(decryptionTimes)))
-	// fmt.Printf("Entry index: %d\n", entryIndex)
-
-	// fmt.Printf("Decryption time: %s\n", time.Since(startDecryption))
-	// fmt.Printf("Finished decrypting %d entries across %d batches.\n", len(results), batchCounter)
-
-	// slices.Reverse(results)
-	return results, total, nil
+	return results, nil
 }
 
 func printRecordAsJSON(v any, maxBytes int) {
@@ -720,21 +796,21 @@ func printRecordAsJSON(v any, maxBytes int) {
     fmt.Println(string(b))
 }
 
-func RetrieveStructSliceLinkedLog(structName, keyName string) (interface{}, time.Duration, error) {
-	records, decryptionTime, err := DecryptLinkedLog(keyName, structName)
+func RetrieveStructSliceLinkedLog(structName, keyName string) (interface{}, error) {
+	records, err := DecryptLinkedLog(keyName, structName)
 
 	if err != nil {
-		return nil, decryptionTime, fmt.Errorf("error retrieving or decrypting: %v", err)
+		return nil, fmt.Errorf("error retrieving or decrypting: %v", err)
 	}
 
 	fmt.Printf("Decrypted %d records for %s\n", len(records), structName)
 
-	return records, decryptionTime, nil
+	return records, nil
 }
 
 func Decision(functionName, structName, ipnsKey string) string {
 	// Retrieve the struct slice dynamically
-	structSliceInterface, decryptionTime, err := RetrieveStructSliceLinkedLog(structName, ipnsKey)
+	structSliceInterface, err := RetrieveStructSliceLinkedLog(structName, ipnsKey)
 	if err != nil {
 		return "error in getting the struct back"
 	}
@@ -763,11 +839,11 @@ func Decision(functionName, structName, ipnsKey string) string {
 	}
 
 	fmt.Println("Found method via DecisionRegistry:", functionName)
-	return executeMethod(method, structSlice, ipnsKey, functionName, decryptionTime)
+	return executeMethod(method, structSlice, ipnsKey, functionName)
 }
 
 // Helper function to execute the method dynamically
-func executeMethod(method reflect.Value, structSlice reflect.Value, ipnsKey, functionName string, decryptionTime time.Duration) string {
+func executeMethod(method reflect.Value, structSlice reflect.Value, ipnsKey, functionName string) string {
 	// Pre-allocate a list to store prepared args
 	argsList := make([][]reflect.Value, structSlice.Len()) // Each element is a slice of reflect.Value
 
@@ -808,7 +884,7 @@ func executeMethod(method reflect.Value, structSlice reflect.Value, ipnsKey, fun
 
 	fmt.Println("----------------------------------------------------------------------------------------------------------------------------")
 
-	return "All patient priorities processed"
+	return "All decisions made"
 }
 
 func DecisionWithAggregation(functionName string, structSlice reflect.Value, additional map[string]interface{}, decryptionTime, aggregationTime time.Duration, ipnsKey string) string {
@@ -1123,8 +1199,6 @@ func executeMethodWithAggregation(method reflect.Value, structSlice reflect.Valu
 
 	fmt.Println(red+"len of struct equal to number of rows of the key:"+reset, strconv.FormatBool(resultValueCheck))
 
-	isgonHelper.LogExecutionTimeToCSVAggregation(structSlice.Interface(), numKeys, elapsedTime, decryptionTime, aggregationTime, ipnsKey, strconv.FormatBool(resultValueCheck))
-
 	fmt.Println("----------------------------------------------------------------------------------------------------------------------------")
 
 	return "All patient priorities processed"
@@ -1230,110 +1304,3 @@ func NewPerformAggregation(feelExpr string, structSlice reflect.Value) (float64,
 
 }
 
-func ParseSetRequestFromQueueBytes(payload map[string]string) ([]byte, string, []byte, string, string, error) {
-	// Extract fields from the payload
-	certificate := []byte(payload["certificate"])
-	encryptedInputDataBase64 := payload["encrypted_data"]
-	fileExtension := payload["file_extension"]
-	functionName := payload["function_name"]
-	ipnsKey := payload["ipns_key"]
-
-	functionName = strings.TrimPrefix(strings.TrimPrefix(string(functionName), "set"), "get")
-
-	// Parse the certificate
-	block, _ := pem.Decode(certificate)
-	if block == nil || block.Type != "CERTIFICATE" {
-		fmt.Println("Error decoding PEM certificate or invalid type")
-		return nil, "", nil, "", "", fmt.Errorf("invalid PEM certificate format")
-	}
-	parsedCert, err := x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		fmt.Printf("Error parsing certificate: %v\n", err)
-		return nil, "", nil, "", "", err
-	}
-
-	// Extract the ECDSA public key from the certificate
-	certPublicKey, ok := parsedCert.PublicKey.(*ecdsa.PublicKey)
-	if !ok {
-		fmt.Println("Certificate public key is not an ECDSA public key")
-		return nil, "", nil, "", "", fmt.Errorf("invalid public key type in certificate")
-	}
-
-	// Decode the client's public key from the payload
-	clientPublicKeyBytes, err := base64.StdEncoding.DecodeString(payload["client_public_key"])
-	if err != nil {
-		fmt.Printf("Error decoding client public key: %v\n", err)
-		return nil, "", nil, "", "", err
-	}
-
-	// Compute the hash of the client's public key (same as the client did)
-	hash := sha256.Sum256(clientPublicKeyBytes)
-
-	// Decode the ECDSA signature (r, s) from ASN.1 format
-	var signature struct {
-		R, S *big.Int
-	}
-	signatureBytes, err := base64.StdEncoding.DecodeString(payload["signature"])
-	if err != nil {
-		fmt.Printf("Error decoding signature: %v\n", err)
-		return nil, "", nil, "", "", err
-	}
-
-	if _, err := asn1.Unmarshal(signatureBytes, &signature); err != nil {
-		fmt.Printf("Error unmarshaling signature: %v\n", err)
-		return nil, "", nil, "", "", err
-	}
-
-	// Verify the signature using the public key extracted from the certificate
-	if !ecdsa.Verify(certPublicKey, hash[:], signature.R, signature.S) {
-		fmt.Println("Signature verification failed")
-		return nil, "", nil, "", "", fmt.Errorf("signature verification failed")
-	}
-
-	fmt.Println("Signature successfully verified using the certificate's public key")
-
-	// Decode encrypted input data
-	encryptedInputData, err := base64.StdEncoding.DecodeString(encryptedInputDataBase64)
-	if err != nil {
-		fmt.Printf("Error decoding encrypted input data: %v\n", err)
-		return nil, "", nil, "", "", err
-	}
-
-	// Generate deterministic server key
-	seedBytes := seedGeneration.GetKey()
-	serverPrivateKey, _, err := isgonHelper.GenerateDeterministicDHKeyPair(seedBytes)
-	if err != nil {
-		fmt.Printf("Error generating server private key: %v\n", err)
-		return nil, "", nil, "", "", err
-	}
-
-	// Reconstruct the client's public key
-	clientPublicKey, err := ecdh.X25519().NewPublicKey(clientPublicKeyBytes)
-	if err != nil {
-		fmt.Printf("Error reconstructing client public key: %v\n", err)
-		return nil, "", nil, "", "", err
-	}
-
-	// Compute shared secret
-	sharedSecret, err := serverPrivateKey.ECDH(clientPublicKey)
-	if err != nil {
-		fmt.Printf("Error computing shared secret: %v\n", err)
-		return nil, "", nil, "", "", err
-	}
-	fmt.Printf("Shared Secret: %x\n", sharedSecret)
-
-	// Derive symmetric key using SHA-256
-	symmetricKey := sha256.Sum256(sharedSecret)
-
-	// Decrypt the encrypted input data using the symmetric key
-	decryptedData, err := encryption.DecryptWithAESGCMClientInput(symmetricKey[:], encryptedInputData)
-	if err != nil {
-		fmt.Printf("Error decrypting input data: %v\n", err)
-		return nil, "", nil, "", "", err
-	}
-
-	// Convert decrypted data to a string
-	// fileString := string(decryptedData)
-
-	return certificate, functionName, decryptedData, fileExtension, ipnsKey, nil
-}
