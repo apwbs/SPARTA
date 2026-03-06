@@ -308,6 +308,8 @@ func main() {
 
 	flag.Parse()
 
+	os.Exit(1)
+
 	// Require exactly one mode (or at least one)
 	if !*startCA && !*genClientCert {
 		fmt.Println("Error: choose one mode: -start_ca or -gen_client_cert")

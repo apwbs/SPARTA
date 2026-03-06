@@ -24,6 +24,7 @@ import (
 	"sparta/src/utils/ipfs"
 	"sparta/src/utils/isgonHelper"
 	seedGeneration "sparta/src/utils/seedGenerator"
+	blockchain "sparta/src/utils/interaction"
 	structs "sparta/src/utils/structures"
 	"time"
 
@@ -708,12 +709,19 @@ func DecryptLinkedLog(keyName, structName string) ([]interface{}, error) {
 	sh := shell.NewShell("localhost:5001")
 	var results []interface{}
 
-	publicKeyIPNS := ipfs.RetrieveKey(sh, keyName)
-	if publicKeyIPNS == "" {
+	// publicKeyIPNS := ipfs.RetrieveKey(sh, keyName)
+	// if publicKeyIPNS == "" {
+	// 	return nil, fmt.Errorf("failed to retrieve public key for keyName: %s", keyName)
+	// }
+	// fmt.Println("publicKeyIPNS:",publicKeyIPNS)
+
+	blockchainKeyIPNS, _ := blockchain.GetIPNSKey(keyName)
+	if blockchainKeyIPNS == "" {
 		return nil, fmt.Errorf("failed to retrieve public key for keyName: %s", keyName)
 	}
+	fmt.Println("blockchainKeyIPNS:", blockchainKeyIPNS)
 
-	cid, err := ipfs.RetrieveFromIPNS(sh, publicKeyIPNS)
+	cid, err := ipfs.RetrieveFromIPNS(sh, blockchainKeyIPNS)
 	fmt.Println("CID from IPNS:", cid)
 	if err != nil || cid == "" {
 		return nil, fmt.Errorf("failed to resolve IPNS head for key %s: %v", keyName, err)

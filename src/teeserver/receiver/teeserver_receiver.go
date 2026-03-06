@@ -152,6 +152,13 @@ func (s *USGonServerReceiver) Stop() {
 	_ = s.server.Close()
 }
 
+// StartNoMeasurement starts the HTTPS server without setting any expected peer measurement.
+// Use this in normal "daemon" mode where we just wait for requests.
+func (s *USGonServerReceiver) StartNoMeasurement() error {
+	fmt.Println("TEE Server Receiver started (normal mode, no peer measurement)")
+	return s.server.ListenAndServeTLS("", "")
+}
+
 // -------------------------
 // Seed exchange receiver
 // -------------------------
