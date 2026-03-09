@@ -12,7 +12,7 @@ func PatientPrioritizationWithAggrHandler(payload map[string]string) string {
 		callable := interfaceISGoMiddleware.CheckCallability(`{accessPolicy: (Role = "MedicalHub" and Country = "Italy")}`, attributes)
 		if callable {
 			Additionals := make(map[string]interface{})
-			structSliceInterface, _, _ := interfaceISGoMiddleware.RetrieveStructSliceLinkedLog("Patient", ipnsKey)
+			structSliceInterface, _ := interfaceISGoMiddleware.RetrieveStructSliceLinkedLog("Patient", ipnsKey)
 			structSlice, ok := structSliceInterface.(reflect.Value)
 			if !ok {
 				structSlice = reflect.ValueOf(structSliceInterface)
@@ -24,7 +24,7 @@ func PatientPrioritizationWithAggrHandler(payload map[string]string) string {
 			Additionals["meanAge"] = aggrResult_meanAge
 			aggrResult_sumAge, _, _ := interfaceISGoMiddleware.NewPerformAggregation("filteredPatients: Patient[ConsentFormSigned = true], sumAge: sum(filteredPatients.Age)", structSlice)
 			Additionals["sumAge"] = aggrResult_sumAge
-			structSliceInterfaceForDecision, _, _ := interfaceISGoMiddleware.RetrieveStructSliceLinkedLog("PatientLight", ipnsKey+"Light")
+			structSliceInterfaceForDecision, _ := interfaceISGoMiddleware.RetrieveStructSliceLinkedLog("PatientLight", ipnsKey+"Light")
 			structSliceForDecision, okForDecision := structSliceInterfaceForDecision.(reflect.Value)
 			if !okForDecision {
 				structSliceForDecision = reflect.ValueOf(structSliceInterfaceForDecision)
@@ -32,7 +32,7 @@ func PatientPrioritizationWithAggrHandler(payload map[string]string) string {
 					return "Error: Retrieved data is not a slice"
 				}
 			}
-			interfaceISGoMiddleware.DecisionWithAggregation(functionName, structSliceForDecision, Additionals, _, _, ipnsKey)
+			interfaceISGoMiddleware.DecisionWithAggregation(functionName, structSliceForDecision, Additionals, ipnsKey)
 			return "Decision performed successfully"
 		}
 		return "Access policy not satisfied"

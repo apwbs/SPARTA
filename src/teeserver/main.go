@@ -48,24 +48,12 @@ func main() {
 
 	// blockchain mode flags
 	doBlockchain := flag.Bool("blockchain", false, "call blockchain.SetIPNSKey and exit")
-	keyName := flag.String("key_name", "", "key name for SetIPNSKey")
-	ipnsKey := flag.String("ipns_key", "", "IPNS/IPFS key string to store via SetIPNSKey")
 
 	flag.Parse()
 
 	// 1) BLOCKCHAIN mode: do it and exit (no measurement needed)
 	if *doBlockchain {
-		if *keyName == "" {
-			fmt.Println("Error: -key_name is required when using -blockchain")
-			os.Exit(1)
-		}
-		if *ipnsKey == "" {
-			fmt.Println("Error: -ipns_key is required when using -blockchain")
-			os.Exit(1)
-		}
-
-		fmt.Printf("[blockchain] SetIPNSKey(key_name=%s, ipns_key=%s)\n", *keyName, *ipnsKey)
-		if err := blockchain.SetIPNSKey(*keyName, *ipnsKey); err != nil {
+		if err := blockchain.SetAllIPNSKeys(); err != nil {
 			fmt.Println("[blockchain] Error:", err)
 			os.Exit(1)
 		}

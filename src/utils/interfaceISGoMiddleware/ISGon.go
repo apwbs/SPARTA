@@ -895,7 +895,7 @@ func executeMethod(method reflect.Value, structSlice reflect.Value, ipnsKey, fun
 	return "All decisions made"
 }
 
-func DecisionWithAggregation(functionName string, structSlice reflect.Value, additional map[string]interface{}, decryptionTime, aggregationTime time.Duration, ipnsKey string) string {
+func DecisionWithAggregation(functionName string, structSlice reflect.Value, additional map[string]interface{}, ipnsKey string) string {
 	// Ensure structSlice is a slice
 	if structSlice.Kind() != reflect.Slice {
 		fmt.Println("Error: structSlice is not a slice")

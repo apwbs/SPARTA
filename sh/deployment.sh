@@ -1,7 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 cd ../src/blockchain
+
+command -v truffle >/dev/null 2>&1 || { echo "Error: truffle not found in PATH"; exit 1; }
 
 contract_address=$(
   truffle migrate --network development --reset \
@@ -11,26 +13,24 @@ contract_address=$(
 )
 
 if [[ -z "$contract_address" ]]; then
-  echo "Could not extract contract address from truffle output"
+  echo "Error: could not extract contract address from truffle output"
   exit 1
 fi
 
-ENV_FILE="../teeserver/.env"
+upsert_env() {
+  local env_file="$1"
+  mkdir -p "$(dirname "$env_file")"
+  touch "$env_file"
 
-if grep -q '^CONTRACT_ADDRESS_SPARTA=' "$ENV_FILE"; then
-  sed -i.bak "s|^CONTRACT_ADDRESS_SPARTA=.*$|CONTRACT_ADDRESS_SPARTA=$contract_address|" "$ENV_FILE"
-else
-  echo "CONTRACT_ADDRESS_SPARTA=$contract_address" >> "$ENV_FILE"
-fi
+  if grep -q '^CONTRACT_ADDRESS_SPARTA=' "$env_file"; then
+    sed -i.bak "s|^CONTRACT_ADDRESS_SPARTA=.*$|CONTRACT_ADDRESS_SPARTA=$contract_address|" "$env_file"
+  else
+    echo "CONTRACT_ADDRESS_SPARTA=$contract_address" >> "$env_file"
+  fi
 
-echo "✅ Updated $ENV_FILE with $contract_address"
+  echo "Updated $env_file with $contract_address"
+}
 
-ENV_FILE="../tee/.env"
-
-if grep -q '^CONTRACT_ADDRESS_SPARTA=' "$ENV_FILE"; then
-  sed -i.bak "s|^CONTRACT_ADDRESS_SPARTA=.*$|CONTRACT_ADDRESS_SPARTA=$contract_address|" "$ENV_FILE"
-else
-  echo "CONTRACT_ADDRESS_SPARTA=$contract_address" >> "$ENV_FILE"
-fi
-
-echo "✅ Updated $ENV_FILE with $contract_address"
+for ENV_FILE in ../teeserver/.env ../tee/.env; do
+  upsert_env "$ENV_FILE"
+done
