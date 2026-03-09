@@ -3,7 +3,12 @@ set -euo pipefail
 
 cd ../src/blockchain
 
-contract_address=$(truffle migrate --network development --reset | tee /dev/tty | grep -Eo '0x[a-fA-F0-9]{40}' | tail -n 1)
+contract_address=$(
+  truffle migrate --network development --reset \
+  | tee /dev/tty \
+  | sed -nE 's/^[[:space:]]*> contract address:[[:space:]]*(0x[a-fA-F0-9]{40}).*$/\1/p' \
+  | tail -n 1
+)
 
 if [[ -z "$contract_address" ]]; then
   echo "Could not extract contract address from truffle output"
