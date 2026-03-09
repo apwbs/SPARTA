@@ -79,36 +79,8 @@ func SetupCA(caCertFilename, caPrivateKeyFilename string) (*x509.Certificate, *e
 	var caTemplate *x509.Certificate
 
 	if fileExists(caCertFilename) && fileExists(caPrivateKeyFilename) {
-		fmt.Println("Using existing CA certificate and private key from", caCertFilename, "and", caPrivateKeyFilename)
-
-		caCertPEM, err := ioutil.ReadFile(caCertFilename)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error loading CA certificate: %v", err)
-		}
-		block, _ := pem.Decode(caCertPEM)
-		if block == nil || block.Type != "CERTIFICATE" {
-			return nil, nil, fmt.Errorf("failed to decode PEM block containing CA certificate")
-		}
-		caCert, err := x509.ParseCertificate(block.Bytes)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error parsing CA certificate: %v", err)
-		}
-
-		caPrivKeyPEM, err := ioutil.ReadFile(caPrivateKeyFilename)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error loading CA private key: %v", err)
-		}
-		block, _ = pem.Decode(caPrivKeyPEM)
-		if block == nil || block.Type != "EC PRIVATE KEY" {
-			return nil, nil, fmt.Errorf("failed to decode PEM block containing CA private key")
-		}
-		caPrivKey, err = x509.ParseECPrivateKey(block.Bytes)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error parsing CA private key: %v", err)
-		}
-
-		caTemplate = caCert
-		return caTemplate, caPrivKey, nil
+		fmt.Println("CA already exists on disk:", caCertFilename, "and", caPrivateKeyFilename)
+		return nil, nil, nil
 	}
 
 	fmt.Println("Generating new CA certificate and private key...")
@@ -159,7 +131,7 @@ func LoadPEM(filename string) ([]byte, error) {
 
 // CheckCertificate verifies a certificate against the local CA cert and extracts attributes.
 func CheckCertificate(certificate []byte) (bool, string, string) {
-	caCertDER, err := LoadPEM("pubkey/ca_cert.pem")
+	caCertDER, err := LoadPEM("src/certauth/pubkey/ca_cert.pem")
 	if err != nil {
 		fmt.Println("Error loading CA certificate:", err)
 		return false, "", ""
@@ -303,12 +275,10 @@ func main() {
 	attributesFlag := flag.String("attributes", "", "attributes (required for client cert generation)")
 
 	// Filenames
-	caCertFilename := "pubkey/ca_cert.pem"
-	caPrivateKeyFilename := "privkey/ca_cert_private_key.pem"
+	caCertFilename := "src/certauth/pubkey/ca_cert.pem"
+	caPrivateKeyFilename := "src/certauth/privkey/ca_cert_private_key.pem"
 
 	flag.Parse()
-
-	os.Exit(1)
 
 	// Require exactly one mode (or at least one)
 	if !*startCA && !*genClientCert {

@@ -14,6 +14,9 @@ import (
 	"os"
 	"sparta/src/utils/contract"
 	"time"
+	"strings"
+
+	"github.com/joho/godotenv"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -23,27 +26,53 @@ import (
 )
 
 func ExecuteTransaction() (contractInstance *contract.Contract, client *ethclient.Client, err error) {
-	ethereumNodeURL := "HTTP://127.0.0.1:7545"
-	contractAddress := "0x225a676dfe1c104369F0622BEE8aFCbFD2436856"
+	// Load .env (safe if missing)
+	_ = godotenv.Load()
 
-	pemCert, err := os.ReadFile("ca/certificate.pem")
+	ethereumNodeURL := strings.TrimSpace(os.Getenv("ETHEREUM_NODE_URL"))
+	contractAddress := strings.TrimSpace(os.Getenv("CONTRACT_ADDRESS_SPARTA"))
+	caCertPath := strings.TrimSpace(os.Getenv("CA_CERT_PATH"))
+
+	if ethereumNodeURL == "" {
+		return nil, nil, fmt.Errorf("missing ETHEREUM_NODE_URL in environment/.env")
+	}
+	if contractAddress == "" {
+		return nil, nil, fmt.Errorf("missing CONTRACT_ADDRESS_SPARTA in environment/.env")
+	}
+	if caCertPath == "" {
+		// default if you want
+		caCertPath = "src/certauth/pubkey/ca_cert.pem"
+	}
+
+	pemCert, err := os.ReadFile(caCertPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error reading CA cert (%s): %v", caCertPath, err)
+	}
 
 	certPool := x509.NewCertPool()
-	certPool.AppendCertsFromPEM(pemCert)
-	httpClient := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: certPool}}}
+	if ok := certPool.AppendCertsFromPEM(pemCert); !ok {
+		return nil, nil, fmt.Errorf("failed to append CA cert from PEM (%s)", caCertPath)
+	}
 
-	ethClient, err := rpc.DialOptions(context.Background(), ethereumNodeURL, rpc.WithHTTPClient(httpClient))
-	ethClient1 := ethclient.NewClient(ethClient)
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{RootCAs: certPool},
+		},
+	}
+
+	rpcClient, err := rpc.DialOptions(context.Background(), ethereumNodeURL, rpc.WithHTTPClient(httpClient))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	contractInstance, _ = bindContract(common.HexToAddress(contractAddress), ethClient1)
+	ethClient := ethclient.NewClient(rpcClient)
+
+	contractInstance, err = bindContract(common.HexToAddress(contractAddress), ethClient)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return contractInstance, ethClient1, nil
+	return contractInstance, ethClient, nil
 }
 
 func bindContract(address common.Address, backend bind.ContractBackend) (*contract.Contract, error) {
