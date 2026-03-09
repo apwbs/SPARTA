@@ -24,3 +24,13 @@ else
 fi
 
 echo "✅ Updated $ENV_FILE with $contract_address"
+
+ENV_FILE="../tee/.env"
+
+if grep -q '^CONTRACT_ADDRESS_SPARTA=' "$ENV_FILE"; then
+  sed -i.bak "s|^CONTRACT_ADDRESS_SPARTA=.*$|CONTRACT_ADDRESS_SPARTA=$contract_address|" "$ENV_FILE"
+else
+  echo "CONTRACT_ADDRESS_SPARTA=$contract_address" >> "$ENV_FILE"
+fi
+
+echo "✅ Updated $ENV_FILE with $contract_address"
