@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"flag"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -66,29 +67,35 @@ type OutputEntry struct {
 }
 
 func main() {
-	// Step 1: Read XML file
-	xmlFile, err := os.Open("../xmls/patient_priority_single_output.xml") // Replace with your XML file path
+	xmlPath := flag.String("xml", "", "path to DMN XML file")
+	flag.Parse()
+
+	if *xmlPath == "" {
+		fmt.Println("Error: -xml is required")
+		os.Exit(1)
+	}
+
+	xmlFile, err := os.Open(*xmlPath)
 	if err != nil {
-		fmt.Println(err)
-		return
+		fmt.Println("Error opening XML:", err)
+		os.Exit(1)
 	}
 	defer xmlFile.Close()
 
-	// Step 2: Read XML content
-	byteValue, _ := ioutil.ReadAll(xmlFile)
-
-	// Step 3: Unmarshal
-	var definitions Definitions
-	err = xml.Unmarshal(byteValue, &definitions)
+	byteValue, err := ioutil.ReadAll(xmlFile)
 	if err != nil {
-		fmt.Println("Error unmarshalling XML:", err)
-		return
+		fmt.Println("Error reading XML:", err)
+		os.Exit(1)
 	}
 
-	// Step 4: Generate decision functions + DecisionRegistry (accumulating)
+	var definitions Definitions
+	if err := xml.Unmarshal(byteValue, &definitions); err != nil {
+		fmt.Println("Error unmarshalling XML:", err)
+		os.Exit(1)
+	}
+
 	generateDecisionFunction(definitions)
 }
-
 // Helper function to generate Go code dynamically + registry
 func generateDecisionFunction(defs Definitions) {
 	// methodName -> receiverType for THIS RUN
@@ -163,9 +170,9 @@ func generateDecisionFunction(defs Definitions) {
 		for _, rule := range decision.DecisionTable.Rules {
 			conditionsMap := make(map[string]string)
 			for i, inputEntry := range rule.InputEntries {
-				inputName := decision.DecisionTable.Inputs[i].InputExpression.Text
+				inputLabel := decision.DecisionTable.Inputs[i].Label 
 				inputType := decision.DecisionTable.Inputs[i].InputExpression.TypeRef
-				conditionsMap[inputName] = inputEntry.Text + "|" + inputType
+				conditionsMap[inputLabel] = inputEntry.Text + "|" + inputType
 			}
 
 			condition := generateConditions(conditionsMap)
@@ -349,24 +356,18 @@ func processStringCondition(key string, value string) string {
 }
 
 func processContext(key, value string) string {
+	// If the test is an interval like [1..10], reuse interval logic
 	if strings.Contains(value, "..") {
 		return processIntervalCondition(key, value)
 	}
 
-	trimmed := strings.Trim(key, "{}")
-	parts := strings.SplitN(trimmed, ":", 2)
-	if len(parts) != 2 {
-		return fmt.Sprintf("// Error: Invalid context expression: %s", key)
-	}
-	key = strings.TrimSpace(parts[0])
-
 	operator := extractOperator(value)
-	numValue := strings.Trim(value, "<=>")
+	numValue := strings.TrimSpace(strings.Trim(value, "<=>"))
 
 	if operator == "" {
-		return fmt.Sprintf("inputs[\"%s\"].(float64) == %s", key, numValue)
+		return fmt.Sprintf("inputs[%q].(float64) == %s", key, numValue)
 	}
-	return fmt.Sprintf("inputs[\"%s\"].(float64) %s %s", key, operator, numValue)
+	return fmt.Sprintf("inputs[%q].(float64) %s %s", key, operator, numValue)
 }
 
 // Helper function to parse "date and time" strings into time.Time

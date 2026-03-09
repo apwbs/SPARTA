@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -21,7 +23,6 @@ type Policy struct {
 	Rules     []*Rule
 
 	// Obligation params captured from `on permit { obligation X { k="v" } }`
-	// We keep them here for later (decisionwithaggregation synthesis, etc.)
 	Obligations map[string]map[string]string // oblSym -> param -> value
 }
 
@@ -42,64 +43,146 @@ func main() {
 		return
 	}
 
-	// Pretty print parsed content
-	fmt.Println("========== Parsed ALFA ==========")
-	fmt.Printf("Namespace: %s\n", policySet.Namespace)
-	for _, p := range policySet.Policies {
-		fmt.Println("\n--------------------------------")
-		fmt.Printf("Policy: %s\n", p.Name)
-		fmt.Printf("  Target: %s\n", p.Target)
+	// // Pretty print parsed content
+	// fmt.Println("========== Parsed ALFA ==========")
+	// fmt.Printf("Namespace: %s\n", policySet.Namespace)
+	// for _, p := range policySet.Policies {
+	// 	fmt.Println("\n--------------------------------")
+	// 	fmt.Printf("Policy: %s\n", p.Name)
+	// 	fmt.Printf("  Target: %s\n", p.Target)
 
-		fmt.Printf("  Resources:\n")
-		for _, k := range []string{"name", "type", "struct"} {
-			if v, ok := p.Resources[k]; ok && v != "" {
-				fmt.Printf("    %s: %s\n", k, v)
-			}
-		}
+	// 	fmt.Printf("  Resources:\n")
+	// 	for _, k := range []string{"name", "type", "struct"} {
+	// 		if v, ok := p.Resources[k]; ok && v != "" {
+	// 			fmt.Printf("    %s: %s\n", k, v)
+	// 		}
+	// 	}
 
-		fmt.Printf("  Rules (%d):\n", len(p.Rules))
-		for _, r := range p.Rules {
-			fmt.Printf("    - Rule: %s\n", r.Name)
-			if r.Action != "" {
-				fmt.Printf("      Action: %s\n", r.Action)
-			}
-			if strings.TrimSpace(r.Condition) != "" {
-				fmt.Printf("      Condition(raw):  %s\n", strings.TrimSpace(r.Condition))
-				fmt.Printf("      Condition(FEEL): %s\n", translateConditionToFEEL(strings.TrimSpace(r.Condition)))
-			}
-		}
+	// 	fmt.Printf("  Rules (%d):\n", len(p.Rules))
+	// 	for _, r := range p.Rules {
+	// 		fmt.Printf("    - Rule: %s\n", r.Name)
+	// 		if r.Action != "" {
+	// 			fmt.Printf("      Action: %s\n", r.Action)
+	// 		}
+	// 		if strings.TrimSpace(r.Condition) != "" {
+	// 			fmt.Printf("      Condition(raw):  %s\n", strings.TrimSpace(r.Condition))
+	// 			fmt.Printf("      Condition(FEEL): %s\n", translateConditionToFEEL(strings.TrimSpace(r.Condition)))
+	// 		}
+	// 	}
 
-		if len(p.Obligations) > 0 {
-			fmt.Printf("  Obligations on permit:\n")
-			for obl, params := range p.Obligations {
-				fmt.Printf("    - %s:\n", obl)
-				for k, v := range params {
-					fmt.Printf("        %s = %q\n", k, v)
-				}
-			}
-		}
-	}
+	// 	if len(p.Obligations) > 0 {
+	// 		fmt.Printf("  Obligations on permit:\n")
+	// 		for obl, params := range p.Obligations {
+	// 			fmt.Printf("    - %s:\n", obl)
+	// 			for k, v := range params {
+	// 				fmt.Printf("        %s = %q\n", k, v)
+	// 			}
+	// 		}
+	// 	}
+	// }
 
-	fmt.Println("\n========== Generating code ==========")
+	// fmt.Println("\n========== Generating code ==========")
 
-	// Generate handlers + server scaffold + handleFunction
-	code := GenerateHandlers(policySet)
+	receiverPath := "../teeserver/receiver/teeserver_receiver.go"
+	desobjPath := "../teeserver/receiver/desobj.go"
 
-	// Write output
-	outputFilePath := "file.go"
-	outFile, err := os.Create(outputFilePath)
+	handleFn, desobjCode, err := GenerateHandleFunctionAndDesobj(policySet, receiverPath)
 	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return
-	}
-	defer outFile.Close()
-
-	if _, err := outFile.WriteString(code); err != nil {
-		fmt.Println("Error writing to file:", err)
+		fmt.Println("Error generating code:", err)
 		return
 	}
 
-	fmt.Println("Generated code has been written to", outputFilePath)
+	// 1) Load existing teeserver_receiver.go
+	receiverBytes, err := os.ReadFile(receiverPath)
+	if err != nil {
+		fmt.Println("Error reading receiver file:", err)
+		return
+	}
+	receiverSrc := string(receiverBytes)
+
+	// 2) Replace placeholder handleFunction
+	updatedReceiver, err := ReplaceHandleFunction(receiverSrc, handleFn)
+	if err != nil {
+		fmt.Println("Error replacing handleFunction:", err)
+		return
+	}
+
+	// 3) Write back teeserver_receiver.go
+	if err := os.WriteFile(receiverPath, []byte(updatedReceiver), 0644); err != nil {
+		fmt.Println("Error writing updated receiver file:", err)
+		return
+	}
+
+	// 4) Write desobj.go
+	if err := os.WriteFile(desobjPath, []byte(desobjCode), 0644); err != nil {
+		fmt.Println("Error writing desobj.go:", err)
+		return
+	}
+
+	fmt.Println("Updated:", receiverPath)
+	fmt.Println("Generated:", desobjPath)
+}
+
+func ReplaceHandleFunction(receiverSrc, newHandleFunction string) (string, error) {
+	sig := "func handleFunction(functionName string, payload map[string]string) string"
+	start := strings.Index(receiverSrc, sig)
+	if start == -1 {
+		return "", fmt.Errorf("handleFunction signature not found")
+	}
+
+	// Find the first '{' after the signature
+	open := strings.Index(receiverSrc[start:], "{")
+	if open == -1 {
+		return "", fmt.Errorf("handleFunction opening brace not found")
+	}
+	open += start
+
+	// Walk forward counting braces to find the matching closing '}'
+	depth := 0
+	inString := false
+	inRawString := false
+	escape := false
+
+	for i := open; i < len(receiverSrc); i++ {
+		ch := receiverSrc[i]
+
+		// Handle raw string literals: `...`
+		if !inString && ch == '`' {
+			inRawString = !inRawString
+			continue
+		}
+		if inRawString {
+			continue
+		}
+
+		// Handle normal string literals: "..."
+		if !inRawString && ch == '"' && !escape {
+			inString = !inString
+			continue
+		}
+		if inString {
+			if ch == '\\' && !escape {
+				escape = true
+			} else {
+				escape = false
+			}
+			continue
+		}
+
+		// Not in any string: count braces
+		if ch == '{' {
+			depth++
+		} else if ch == '}' {
+			depth--
+			if depth == 0 {
+				// i is the matching closing brace of the function
+				end := i + 1
+				return receiverSrc[:start] + newHandleFunction + receiverSrc[end:], nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("unterminated handleFunction block (could not find matching brace)")
 }
 
 // -------------------------
@@ -253,11 +336,10 @@ func parsePolicySet(filePath string) (PolicySet, error) {
 				currentRule = &Rule{Name: rname}
 				currentPolicy.Rules = append(currentPolicy.Rules, currentRule)
 
-				// type comes from rule name (accessWrite/accessDecision/...)
+				// type comes from rule name
 				if t := typeFromRuleName(rname); t != "" {
 					currentPolicy.Resources["type"] = t
 				}
-
 				continue
 			}
 
@@ -407,13 +489,20 @@ func typeFromRuleName(ruleName string) string {
 	if strings.HasPrefix(n, "access") {
 		n = strings.TrimPrefix(n, "access")
 	}
+
+	// Explicit "with aggregation" marker (what you expect in the ALFA file)
+	if strings.Contains(n, "decisionwithaggregation") ||
+		strings.Contains(n, "decisionwithaggr") ||
+		strings.Contains(n, "withaggregation") ||
+		strings.Contains(n, "withaggr") {
+		return "decisionwithaggregation"
+	}
+
 	switch {
 	case strings.HasPrefix(n, "write"):
 		return "write"
 	case strings.HasPrefix(n, "read"):
 		return "read"
-	case strings.HasPrefix(n, "decisionwithaggr"), strings.HasPrefix(n, "decisionwithaggregation"), strings.HasPrefix(n, "withaggr"):
-		return "decisionwithaggregation"
 	case strings.HasPrefix(n, "decision"):
 		return "decision"
 	default:
@@ -557,8 +646,20 @@ func extractQuotedValue(input string) string {
 	return input[start+1 : end]
 }
 
+// -------------------------
+// Generation: handleFunction replacement + desobj.go
+// -------------------------
 
-func GenerateHandlers(policySet PolicySet) string {
+func GenerateHandleFunctionAndDesobj(policySet PolicySet, receiverPath string) (handleFn string, desobjGo string, err error) {
+	receiverBytes, err := os.ReadFile(receiverPath)
+	if err != nil {
+		return "", "", err
+	}
+	pkg := parsePackageName(string(receiverBytes))
+	if pkg == "" {
+		return "", "", fmt.Errorf("could not determine package name from %s", receiverPath)
+	}
+
 	var functions string
 	var switchCases string
 
@@ -576,41 +677,69 @@ func GenerateHandlers(policySet PolicySet) string {
 	for _, policy := range policySet.Policies {
 		for _, rule := range policy.Rules {
 			resourceName := policy.Resources["name"]
-			resourceType := policy.Resources["type"]
+			resourceType := strings.ToLower(policy.Resources["type"])
 			resourceStruct := policy.Resources["struct"]
 
 			logicalFormula := translateConditionToFEEL(rule.Condition)
 
-			// WRITE (queue)
-			if strings.ToLower(resourceType) == "write" {
-				caseKey := "set" + resourceName
-				handlerFn := "set" + resourceName + "Handler"
+			// WRITE
+			if resourceType == "write" {
+				caseKey := resourceName
+				handlerFn := resourceName + "Handler"
 
 				functions += fmt.Sprintf(`
 func %s(payload map[string]string) string {
-	certificate, functionName, fileBytes, _, ipnsKey, _ := interfaceISGoMiddleware.ParseSetRequestFromQueueBytes(payload)
+	certificate, _, fileBytes, _, ipnsKey, _ := interfaceISGoMiddleware.ParseSetRequestFromQueueBytes(payload)
 	certificateValidity, attributes := interfaceISGoMiddleware.CheckCertificate(certificate)
 	if certificateValidity {
 		callable := interfaceISGoMiddleware.CheckCallability(`+"`{accessPolicy: %s}`"+`, attributes)
 		if callable {
-			interfaceISGoMiddleware.EncryptAndUploadLinkedBytes(fileBytes, "%s", ipnsKey)
-			interfaceISGoMiddleware.EncryptAndUploadLinkedBytes(fileBytes, "%sLight", ipnsKey+"Light")
+			interfaceISGoMiddleware.EncryptAndUploadLinkedBytes(fileBytes, %q, ipnsKey)
+			interfaceISGoMiddleware.EncryptAndUploadLinkedBytes(fileBytes, %q, ipnsKey+"Light")
 			return "Encryption of document performed successfully"
 		}
 		return "Access policy not satisfied"
 	}
 	return "Invalid certificate"
 }
-				`, handlerFn, logicalFormula, resourceStruct, resourceStruct)
+`, handlerFn, logicalFormula, resourceStruct, resourceStruct+"Light")
 
 				addSwitchCase(caseKey, handlerFn)
 				continue
 			}
 
-			// DECISION (queue) — includes ipnsKey
-			if strings.ToLower(resourceType) == "decision" {
+			// DECISION WITH AGGREGATION (rule name marker: accessDecisionWithAggregation)
+			if resourceType == "decisionwithaggregation" {
 				caseKey := resourceName
-				handlerFn := "decide" + resourceName + "Handler"
+				handlerFn := resourceName + "Handler"
+
+				_, oblParams, ok := pickAggregationObligation(policy)
+				if !ok {
+					return "", "", fmt.Errorf("policy %s: decisionwithaggregation but no obligations found", policy.Name)
+				}
+
+				// Determine base struct for aggregation:
+				// from Action=="X(BaseStruct, ...)" -> base struct is first arg
+				// You already store currentPolicy.Resources["struct"] from actArgs[0]
+				baseStruct := resourceStruct
+
+				// Decision struct for decision step:
+				decisionStruct := resourceStruct + "Light"
+
+				// Deterministic param order
+				paramNames := make([]string, 0, len(oblParams))
+				for k := range oblParams {
+					paramNames = append(paramNames, k)
+				}
+				sort.Strings(paramNames)
+
+				var aggrLines strings.Builder
+				for _, param := range paramNames {
+					spec := oblParams[param]
+					aggrLines.WriteString(fmt.Sprintf(`
+			aggrResult_%s, _, _ := interfaceISGoMiddleware.NewPerformAggregation(%q, structSlice)
+			Additionals[%q] = aggrResult_%s`, param, spec, param, param))
+				}
 
 				functions += fmt.Sprintf(`
 func %s(payload map[string]string) string {
@@ -619,337 +748,134 @@ func %s(payload map[string]string) string {
 	if certificateValidity {
 		callable := interfaceISGoMiddleware.CheckCallability(`+"`{accessPolicy: %s}`"+`, attributes)
 		if callable {
-			interfaceISGoMiddleware.Decision(functionName, "%sLight", ipnsKey+"Light")
+			Additionals := make(map[string]interface{})
+			structSliceInterface, _, _ := interfaceISGoMiddleware.RetrieveStructSliceLinkedLog(%q, ipnsKey)
+			structSlice, ok := structSliceInterface.(reflect.Value)
+			if !ok {
+				structSlice = reflect.ValueOf(structSliceInterface)
+				if structSlice.Kind() != reflect.Slice {
+					return "Error: Retrieved data is not a slice"
+				}
+			}
+			%s
+			structSliceInterfaceForDecision, _, _ := interfaceISGoMiddleware.RetrieveStructSliceLinkedLog(%q, ipnsKey+"Light")
+			structSliceForDecision, okForDecision := structSliceInterfaceForDecision.(reflect.Value)
+			if !okForDecision {
+				structSliceForDecision = reflect.ValueOf(structSliceInterfaceForDecision)
+				if structSliceForDecision.Kind() != reflect.Slice {
+					return "Error: Retrieved data is not a slice"
+				}
+			}
+			interfaceISGoMiddleware.DecisionWithAggregation(functionName, structSliceForDecision, Additionals, _, _, ipnsKey)
 			return "Decision performed successfully"
 		}
 		return "Access policy not satisfied"
 	}
 	return "Invalid certificate"
 }
-				`, handlerFn, logicalFormula, resourceStruct)
+`, handlerFn,
+					logicalFormula,
+					baseStruct,
+					strings.TrimSpace(aggrLines.String()),
+					decisionStruct,
+					)
 
 				addSwitchCase(caseKey, handlerFn)
 				continue
 			}
 
-			// decisionwithaggregation will be handled later using policy.Obligations
-			_ = rule
+			// DECISION (normal)
+			if resourceType == "decision" {
+				caseKey := resourceName
+				handlerFn := resourceName + "Handler"
+
+				functions += fmt.Sprintf(`
+func %s(payload map[string]string) string {
+	certificate, functionName, ipnsKey, _ := interfaceISGoMiddleware.ParseDecisionRequestFromQueue(payload)
+	certificateValidity, attributes := interfaceISGoMiddleware.CheckCertificate(certificate)
+	if certificateValidity {
+		callable := interfaceISGoMiddleware.CheckCallability(`+"`{accessPolicy: %s}`"+`, attributes)
+		if callable {
+			interfaceISGoMiddleware.Decision(functionName, %q, ipnsKey+"Light")
+			return "Decision performed successfully"
+		}
+		return "Access policy not satisfied"
+	}
+	return "Invalid certificate"
+}
+`, handlerFn,
+					logicalFormula,
+					resourceStruct+"Light")
+
+				addSwitchCase(caseKey, handlerFn)
+				continue
+			}
 		}
 	}
 
-	handleFunction := fmt.Sprintf(`
-func handleFunction(functionName string, payload map[string]string) string {
+	handleFn = fmt.Sprintf(`func handleFunction(functionName string, payload map[string]string) string {
 	switch functionName {%s
 	default:
 		return "Unknown function: " + functionName
 	}
-}
-`, switchCases)
+}`, switchCases)
 
-	// ------------------------------------------------------------
-	// NEW SERVER SCAFFOLD: Redis queue + /secret seed exchange gate
-	// ------------------------------------------------------------
-	serverScaffold := fmt.Sprintf(`
-const (
-	requestQueue  = "request_queue"
-	responseQueue = "response_queue"
-)
+	desobjGo = fmt.Sprintf(`package %s
 
-// Global Redis client
-var redisClient *redis.Client
-
-func init() {
-	redisClient = redis.NewClient(&redis.Options{
-		Addr: "localhost:6379", // Redis server address
-	})
-}
-
-type USGonServerReceiver struct {
-	server *http.Server
-}
-
-var (
-	teeServerMeasurement string = ""
-	seedExchangeEnabled  bool   = false
-)
-
-
-// StartUSGonServer now supports BOTH modes:
-//
-// - exchangeSeed=true  => BOOTSTRAP mode:
-//     * uses CreateBootstrapCertificate() (no seed needed)
-//     * exposes /secret endpoint (to receive the seed)
-//     * DOES NOT start readQueue() because normal workload assumes the deterministic cert/seed exists
-//
-// - exchangeSeed=false => NORMAL mode:
-//     * uses CreateCertificate() (seed required)
-//     * /secret is disabled
-//     * starts readQueue()
-
-// StartTEE creates the enclave HTTPS server.
-// - exchangeSeed=true  => BOOTSTRAP cert + /secret enabled
-// - exchangeSeed=false => NORMAL deterministic cert + /secret disabled
-func StartTEE(exchangeSeed bool) *USGonServerReceiver {
-	seedExchangeEnabled = exchangeSeed
-
-	var cert []byte
-	var priv interface{}
-
-	if seedExchangeEnabled {
-		cert, priv = interfaceISGoMiddleware.CreateBootstrapCertificate()
-		fmt.Println("Using BOOTSTRAP certificate (seed not required).")
-	} else {
-		cert, priv = interfaceISGoMiddleware.CreateCertificate()
-		fmt.Println("Using NORMAL deterministic certificate (seed required).")
-	}
-
-	if cert == nil || priv == nil {
-		fmt.Println("Error: certificate creation failed")
-		os.Exit(1)
-	}
-
-	hash := sha256.Sum256(cert)
-	s := &USGonServerReceiver{}
-
-	report, err := enclave.GetRemoteReport(hash[:])
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	// Read CA certificate for attestation
-	caCert, err := os.ReadFile("certificate/user_cert.pem")
-	if err != nil {
-		fmt.Println("Error reading CA certificate:", err)
-		os.Exit(1)
-	}
-
-	// HTTP handlers
-	handler := http.NewServeMux()
-
-	// Remote attestation endpoints
-	handler.HandleFunc("/caCert", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Sending CA certificate")
-		_, _ = w.Write(caCert)
-	})
-	handler.HandleFunc("/cert", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Sending RA certificate")
-		_, _ = w.Write(cert)
-	})
-	handler.HandleFunc("/report", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Sending report")
-		_, _ = w.Write(report)
-	})
-
-	// Seed exchange endpoint (gated inside handleKey)
-	handler.HandleFunc("/secret", handleKey)
-
-	tlsCfg := tls.Config{
-		Certificates: []tls.Certificate{
-			{
-				Certificate: [][]byte{cert},
-				PrivateKey:  priv,
-			},
-		},
-	}
-
-	// Start processing requests from middleware ONLY in normal mode
-	if !seedExchangeEnabled {
-		go readQueue()
-	} else {
-		fmt.Println("BOOTSTRAP mode: readQueue() NOT started (waiting for /secret).")
-	}
-
-	s.server = &http.Server{
-		Addr:      "0.0.0.0:8075",
-		TLSConfig: &tlsCfg,
-		Handler:   handler,
-	}
-	return s
-}
-
-// Start sets the expected peer measurement (used by VerifyTEE) and starts HTTPS server.
-func (s *USGonServerReceiver) Start(measurement string) error {
-	fmt.Println("TEE Server Receiver started")
-	teeServerMeasurement = measurement
-	return s.server.ListenAndServeTLS("", "")
-}
-
-// Graceful stop (used after seed exchange, if you want to exit immediately).
-func (s *USGonServerReceiver) Stop() {
-	if s == nil || s.server == nil {
-		return
-	}
-	_ = s.server.Close()
-}
-
-// -------------------------
-// Seed exchange receiver
-// -------------------------
-func handleKey(w http.ResponseWriter, r *http.Request) {
-	// Gate seed exchange endpoint
-	if !seedExchangeEnabled {
-		http.Error(w, "Seed exchange disabled (run with -exchange_seed)", http.StatusForbidden)
-		return
-	}
-
-	// Verify the peer TEE
-	valid := teeRequester.VerifyTEE(teeServerMeasurement, false)
-	if !valid {
-		http.Error(w, "TEE verification failed", http.StatusUnauthorized)
-		return
-	}
-
-	// Validate Content-Type
-	contentType := r.Header.Get("Content-Type")
-	if !strings.HasPrefix(contentType, "multipart/form-data") {
-		fmt.Println("Unsupported Content-Type:", contentType)
-		http.Error(w, "Unsupported Content-Type", http.StatusUnsupportedMediaType)
-		return
-	}
-
-	// Parse multipart form data
-	mr, err := r.MultipartReader()
-	if err != nil {
-		fmt.Println("Error creating multipart reader:", err)
-		http.Error(w, "Failed to read multipart data", http.StatusBadRequest)
-		return
-	}
-
-	var seedBytes []byte
-
-	for {
-		part, err := mr.NextPart()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			fmt.Println("Error reading part:", err)
-			http.Error(w, "Failed to read multipart data", http.StatusInternalServerError)
-			return
-		}
-
-		switch part.FormName() {
-		case "seed":
-			seed, err := io.ReadAll(part)
-			if err != nil || len(seed) == 0 {
-				fmt.Println("Error reading seed field:", err)
-				http.Error(w, "Invalid seed field", http.StatusBadRequest)
-				return
-			}
-			seedBytes = seed
-		default:
-			fmt.Println("Unknown form field:", part.FormName())
-		}
-	}
-
-	if len(seedBytes) == 0 {
-		fmt.Println("Seed not provided")
-		http.Error(w, "Seed not provided", http.StatusBadRequest)
-		return
-	}
-
-	// Seal and store
-	sealedSeed, err := sealing.NewSealing(seedBytes, []byte(""), true)
-	if err != nil {
-		fmt.Println("Error sealing seed:", err)
-		http.Error(w, "Failed to seal seed", http.StatusInternalServerError)
-		return
-	}
-
-	if err := seedGeneration.WriteSealedSeed(sealedSeed); err != nil {
-		fmt.Println("Error storing sealed seed:", err)
-		http.Error(w, "Failed to store sealed seed", http.StatusInternalServerError)
-		return
-	}
-
-	_, _ = w.Write([]byte("Seed stored successfully"))
-}
-
-// -------------------------
-// Redis request processing
-// -------------------------
-type EncryptedPayload struct {
-	ClientID string ` + "`json:\"client_id\"`" + `
-	Data     string ` + "`json:\"data\"`" + `
-}
-
-type ClientPayload struct {
-	FunctionName    string ` + "`json:\"function_name\"`" + `
-	Certificate     string ` + "`json:\"certificate\"`" + `
-	EncryptedData   string ` + "`json:\"encrypted_data\"`" + `
-	FileExtension   string ` + "`json:\"file_extension\"`" + `
-	IPNSKey         string ` + "`json:\"ipns_key\"`" + `
-	ClientPublicKey string ` + "`json:\"client_public_key\"`" + `
-	Signature       string ` + "`json:\"signature\"`" + `
-}
-
-type QueuePayload struct {
-	ClientID string        ` + "`json:\"client_id\"`" + `
-	Data     ClientPayload ` + "`json:\"data\"`" + `
-}
-
-func readQueue() {
-	for {
-		res, err := redisClient.BRPop(redisClient.Context(), 0, requestQueue).Result()
-		if err != nil {
-			fmt.Printf("[Server] Error dequeuing request: %v\n", err)
-			continue
-		}
-
-		var payload QueuePayload
-		if err := json.Unmarshal([]byte(res[1]), &payload); err != nil {
-			fmt.Printf("[Server] Error parsing payload: %v\n", err)
-			continue
-		}
-
-		response := handleFunction(payload.Data.FunctionName, map[string]string{
-			"function_name":     payload.Data.FunctionName,
-			"certificate":       payload.Data.Certificate,
-			"encrypted_data":    payload.Data.EncryptedData,
-			"file_extension":    payload.Data.FileExtension,
-			"ipns_key":          payload.Data.IPNSKey,
-			"client_public_key": payload.Data.ClientPublicKey,
-			"signature":         payload.Data.Signature,
-		})
-
-		responsePayload, _ := json.Marshal(map[string]string{
-			"client_id": payload.ClientID,
-			"response":  response,
-		})
-		if err := redisClient.LPush(redisClient.Context(), responseQueue, responsePayload).Err(); err != nil {
-			fmt.Printf("[Server] Error enqueuing response: %v\n", err)
-		} else {
-			fmt.Printf("[Server] Enqueued response for client: %s\n", payload.ClientID)
-			fmt.Println("----------------------------------------------------------------------------------------------------------------------------")
-		}
-	}
-}
-`)
-
-	packages := fmt.Sprintf(`package tee_server_receiver
-`)
-
-	// Imports: keep only what the generated file really needs now
-	imports := fmt.Sprintf(`
 import (
-	"crypto/sha256"
-	"crypto/tls"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"strings"
-
-	teeRequester "sparta/src/teeserver/requester"
+	"reflect"
 	"sparta/src/utils/interfaceISGoMiddleware"
-	"sparta/src/utils/sealing"
-	seedGeneration "sparta/src/utils/seedGenerator"
-
-	"github.com/edgelesssys/ego/enclave"
-	"github.com/go-redis/redis/v8"
 )
-	`)
 
-	return packages + imports + serverScaffold + handleFunction + functions
+%s
+`, pkg, strings.TrimSpace(functions))
+
+	return handleFn, desobjGo, nil
+}
+
+func parsePackageName(src string) string {
+	re := regexp.MustCompile(`(?m)^\s*package\s+([A-Za-z_][A-Za-z0-9_]*)\s*$`)
+	m := re.FindStringSubmatch(src)
+	if len(m) == 2 {
+		return m[1]
+	}
+	return ""
+}
+
+// Prefer obligation named "AggregationSpec" if present, otherwise pick the first one.
+func pickAggregationObligation(pol *Policy) (oblName string, params map[string]string, ok bool) {
+	if pol.Obligations == nil || len(pol.Obligations) == 0 {
+		return "", nil, false
+	}
+	if p, exists := pol.Obligations["AggregationSpec"]; exists {
+		return "AggregationSpec", p, true
+	}
+	// deterministic pick: sorted by name
+	names := make([]string, 0, len(pol.Obligations))
+	for k := range pol.Obligations {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	n := names[0]
+	return n, pol.Obligations[n], true
+}
+
+// deterministic Go map literal
+func goStringMapLiteral(m map[string]string) string {
+	if len(m) == 0 {
+		return "map[string]string{}"
+	}
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var sb strings.Builder
+	sb.WriteString("map[string]string{\n")
+	for _, k := range keys {
+		sb.WriteString(fmt.Sprintf("\t%q: %q,\n", k, m[k]))
+	}
+	sb.WriteString("}")
+	return sb.String()
 }

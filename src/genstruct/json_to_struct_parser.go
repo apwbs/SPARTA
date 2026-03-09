@@ -9,12 +9,6 @@ import (
 	"strings"
 )
 
-// XML structure to parse <inputData> tags
-type InputData struct {
-	XMLName xml.Name `xml:"inputData"`
-	Name    string   `xml:"name,attr"`
-}
-
 // parseType determines the Go type for a given JSON value.
 func parseType(value interface{}) string {
 	switch v := value.(type) {
@@ -37,18 +31,17 @@ func parseType(value interface{}) string {
 	}
 }
 
-// deriveStruct generates a Go struct definition from a JSON object in order.
+// deriveStruct generates a Go struct definition from a JSON object.
 func deriveStruct(structName string, jsonObj map[string]interface{}) (string, map[string]string) {
 	var sb strings.Builder
 	fieldMap := make(map[string]string)
 
 	sb.WriteString(fmt.Sprintf("type %s struct {\n", structName))
 
-	// Preserve order by iterating over the JSON object keys
 	for key, value := range jsonObj {
 		fieldName := strings.Title(key)
 		fieldType := parseType(value)
-		fieldMap[fieldName] = fieldType // Store for matching later
+		fieldMap[fieldName] = fieldType
 		jsonTag := fmt.Sprintf("`json:\"%s\"`", key)
 		sb.WriteString(fmt.Sprintf("\t%s %s %s\n", fieldName, fieldType, jsonTag))
 	}
@@ -63,7 +56,7 @@ func deriveStructLight(structName string, fieldMap map[string]string, xmlFields 
 	sb.WriteString(fmt.Sprintf("type %sLight struct {\n", structName))
 
 	for _, xmlField := range xmlFields {
-		field := strings.Title(xmlField) // Ensure XML fields are properly title-cased
+		field := strings.Title(xmlField)
 		if fieldType, exists := fieldMap[field]; exists {
 			jsonTag := fmt.Sprintf("`json:\"%s\"`", xmlField)
 			sb.WriteString(fmt.Sprintf("\t%s %s %s\n", field, fieldType, jsonTag))
@@ -74,19 +67,30 @@ func deriveStructLight(structName string, fieldMap map[string]string, xmlFields 
 	return sb.String()
 }
 
-// parseXML extracts input labels from the DMN XML file.
-func parseXML(filePath string) ([]string, error) {
+// DMN input info: label + typeRef from inputExpression
+type DMNInputInfo struct {
+	Label   string
+	TypeRef string
+}
+
+// parseXML extracts input labels + typeRef from the DMN XML file.
+func parseXML(filePath string) ([]DMNInputInfo, error) {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
 
+	type InputExpression struct {
+		TypeRef string `xml:"typeRef,attr"`
+	}
 	type Input struct {
-		Label string `xml:"label,attr"`
+		Label           string          `xml:"label,attr"`
+		InputExpression InputExpression `xml:"inputExpression"`
 	}
 
 	decoder := xml.NewDecoder(strings.NewReader(string(data)))
-	var names []string
+	var inputs []DMNInputInfo
+
 	for {
 		token, err := decoder.Token()
 		if err != nil {
@@ -95,15 +99,32 @@ func parseXML(filePath string) ([]string, error) {
 		switch se := token.(type) {
 		case xml.StartElement:
 			if se.Name.Local == "input" {
-				var input Input
-				if err := decoder.DecodeElement(&input, &se); err == nil {
-					names = append(names, input.Label)
+				var in Input
+				if err := decoder.DecodeElement(&in, &se); err == nil {
+					inputs = append(inputs, DMNInputInfo{
+						Label:   in.Label,
+						TypeRef: in.InputExpression.TypeRef,
+					})
 				}
 			}
 		}
 	}
 
-	return names, nil
+	return inputs, nil
+}
+
+func addExtraFieldsToStruct(structCode string, extras []string) string {
+	idx := strings.LastIndex(structCode, "}\n")
+	if idx == -1 || len(extras) == 0 {
+		return structCode
+	}
+	var sb strings.Builder
+	sb.WriteString(structCode[:idx])
+	for _, line := range extras {
+		sb.WriteString(line)
+	}
+	sb.WriteString(structCode[idx:])
+	return sb.String()
 }
 
 // generateStructScript generates a complete Go script containing the structs and registry.
@@ -114,18 +135,18 @@ func generateStructScript(structName, mainStruct, lightStruct string) {
 	sb.WriteString("import \"reflect\"\n\n")
 
 	sb.WriteString("var StructRegistry = map[string]reflect.Type{\n")
-	sb.WriteString(fmt.Sprintf("\t\"%s\": reflect.TypeOf(%s{}),\n", structName, structName))
-	sb.WriteString(fmt.Sprintf("\t\"%sLight\": reflect.TypeOf(%sLight{}),\n", structName, structName))
+	sb.WriteString(fmt.Sprintf("\t%q: reflect.TypeOf(%s{}),\n", structName, structName))
+	sb.WriteString(fmt.Sprintf("\t%q: reflect.TypeOf(%sLight{}),\n", structName+"Light", structName))
 	sb.WriteString("\t// Add other structs here if needed\n")
 	sb.WriteString("}\n\n")
 
 	sb.WriteString(mainStruct + "\n")
-	sb.WriteString(lightStruct + "\n")
+	if lightStruct != "" {
+		sb.WriteString(lightStruct + "\n")
+	}
 
-	// Write the script to a file called "structs.go"
 	outputFile := "../utils/structures/structs.go"
-	err := os.WriteFile(outputFile, []byte(sb.String()), 0644)
-	if err != nil {
+	if err := os.WriteFile(outputFile, []byte(sb.String()), 0644); err != nil {
 		fmt.Println("Error writing to structs.go:", err)
 		return
 	}
@@ -134,13 +155,11 @@ func generateStructScript(structName, mainStruct, lightStruct string) {
 }
 
 func main() {
-	// Define command-line flags
 	structName := flag.String("struct_name", "AutoGeneratedStruct", "Name of the generated struct")
 	inputFile := flag.String("input_file", "input.json", "Path to the JSON input file")
 	decisionInputs := flag.String("decision_inputs", "", "Path to the XML decision inputs file")
 	flag.Parse()
 
-	// Read and parse JSON file
 	data, err := os.ReadFile(*inputFile)
 	if err != nil {
 		fmt.Println("Error reading JSON file:", err)
@@ -158,26 +177,48 @@ func main() {
 		return
 	}
 
-	// Check length of JSON and select first entry
 	jsonObj := rawData[0]
 	if len(rawData) > 1 {
 		fmt.Printf("JSON has %d entries, using the first entry for struct generation.\n", len(rawData))
 	}
 
-	// Generate main struct (use selected object for field extraction)
 	mainStruct, fieldMap := deriveStruct(*structName, jsonObj)
 
-	// Process XML for StructLight
 	var lightStruct string
 	if *decisionInputs != "" {
-		xmlFields, err := parseXML(*decisionInputs)
+		dmnInputs, err := parseXML(*decisionInputs)
 		if err != nil {
 			fmt.Println("Error parsing XML file:", err)
 			return
 		}
-		lightStruct = deriveStructLight(*structName, fieldMap, xmlFields)
+
+		// fmt.Println("Detected inputs from XML:")
+		// for _, in := range dmnInputs {
+		// 	fmt.Printf("  label=%q typeRef=%q\n", in.Label, in.TypeRef)
+		// }
+
+		var xmlLabels []string
+		var extraContextLines []string
+
+		for _, in := range dmnInputs {
+			xmlLabels = append(xmlLabels, in.Label)
+
+			// Include additional fields ONLY if missing in JSON AND typeRef="context"
+			field := strings.Title(in.Label)
+			if _, exists := fieldMap[field]; !exists && in.TypeRef == "context" {
+				// context fields in your generator are used as numeric comparisons -> float64
+				fieldMap[field] = "float64"
+				extraContextLines = append(extraContextLines,
+					fmt.Sprintf("\t%s float64 `json:\"%s\"`\n", field, in.Label))
+			}
+		}
+
+		// Add extra context fields to the main struct too (so they exist in Patient as well)
+		mainStruct = addExtraFieldsToStruct(mainStruct, extraContextLines)
+
+		// Now build Light struct using xmlLabels filtered by fieldMap (JSON types + added context extras)
+		lightStruct = deriveStructLight(*structName, fieldMap, xmlLabels)
 	}
 
-	// Generate and save the full Go script into "structs.go"
 	generateStructScript(*structName, mainStruct, lightStruct)
 }

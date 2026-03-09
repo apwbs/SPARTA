@@ -152,7 +152,7 @@ func CheckCertificate(certificate []byte) (bool, string, string) {
 		fmt.Println("Certificate verification failed:", err)
 		return false, "", ""
 	}
-	fmt.Println("Certificate successfully verified by TEE")
+	// fmt.Println("Certificate successfully verified by TEE")
 
 	var attributes []string
 	for _, ext := range parsedDoCert.Extensions {
@@ -328,9 +328,10 @@ func main() {
 		fmt.Println("Client certificate generated and saved as", doCertPath)
 
 		// Optional verification print (kept from your original behavior)
-		success, blockchainAddress, attrs := CheckCertificate(doCertDER)
+		// success, blockchainAddress, attrs := CheckCertificate(doCertDER)
+		success, _, attrs := CheckCertificate(doCertDER)
 		if success {
-			fmt.Println("Blockchain Address:", blockchainAddress)
+			// fmt.Println("Blockchain Address:", blockchainAddress)
 			fmt.Println("Attributes:", attrs)
 		} else {
 			fmt.Println("Failed to verify or retrieve information from the certificate.")

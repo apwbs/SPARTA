@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:biodi="http://bpmn.io/schema/dmn/biodi/2.0" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="Definitions_1a2f3le" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Web Modeler" exporterVersion="fc945f5" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0">
+  <decision id="Decision_mnyntvs" name="PatientPrioritizationWithAggr">
+    <informationRequirement id="InformationRequirement_0n411u1">
+      <requiredInput href="#InputData_0oibox9" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_1x5p1vk">
+      <requiredInput href="#InputData_11fj34g" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_1htwj9q">
+      <requiredInput href="#InputData_1c809b5" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_00fhksf">
+      <requiredInput href="#InputData_1qdzhw1" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_0sarzba">
+      <requiredInput href="#InputData_0w49nft" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_1dqat2o">
+      <requiredInput href="#InputData_1hyqwyg" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_043bn6o">
+      <requiredInput href="#InputData_1qdpr7v" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_00sff55">
+      <input id="Input_1" label="Age">
+        <inputExpression id="InputExpression_1" typeRef="number">
+          <text>Age</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_02bbntn" label="PreExistingConditions" biodi:width="192">
+        <inputExpression id="LiteralExpression_0xtevk4" typeRef="string">
+          <text>PreExistingConditions</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_068xgku" label="CurrentMedications">
+        <inputExpression id="LiteralExpression_0uf7i74" typeRef="string">
+          <text>CurrentMedications</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_0inwvop" label="PreviousVaccinations">
+        <inputExpression id="LiteralExpression_1h65wcz" typeRef="string">
+          <text>PreviousVaccinations</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_0n9l287" label="FamilyMedicalHistory">
+        <inputExpression id="LiteralExpression_1xbpozt" typeRef="string">
+          <text>FamilyMedicalHistory</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_1cjkuke" label="ConsentFormSigned" biodi:width="192">
+        <inputExpression id="LiteralExpression_0l8xvzl" typeRef="boolean">
+          <text>ConsentFormSigned</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_0trwfjl" label="MeanAge" biodi:width="191">
+        <inputExpression id="LiteralExpression_0pudbtu" typeRef="context">
+          <text>{filteredPersons: Persons[ConsentFormSigned = true], totalAge: ceiling(mean(filteredPersons.Age) * 2 + max(filteredPersons.Age) / 2 - abs(min(filteredPersons.Age) - mean(filteredPersons.Age))) + floor(mean(filteredPersons.Age) / 3)}</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_1sdhgxy" label="SumAge" biodi:width="192">
+        <inputExpression id="LiteralExpression_0b4fr60" typeRef="context">
+          <text>{filteredPatients: Patient[ConsentFormSigned = true], sumAge: sum(filteredPatients.Age)}</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="Priority" name="Priority" typeRef="string" />
+      <rule id="DecisionRule_1hqygw9">
+        <inputEntry id="UnaryTests_0x9h1wl">
+          <text>&gt;=60</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1fsifol">
+          <text>"Asthma","Diabetes"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1fzq3ep">
+          <text>"Metformin","Albuterol"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_07nshy3">
+          <text>"COVID-19", "Influenza"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0t96vf5">
+          <text>"Diabetes","Heart Disease"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_17etn1p">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0w3w138">
+          <text>&gt;=40</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1ayu1zq">
+          <text>&gt;250</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_10qn19r">
+          <text>"High"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0ju2o0s">
+        <inputEntry id="UnaryTests_1f4s88a">
+          <text>[18..60[</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_05mujfr">
+          <text>"Asthma"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_15app5n">
+          <text>"Metformin"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0ox5eh9">
+          <text>"Influenza"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1oyp1ze">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1frz0bf">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_13o8ptd">
+          <text>&lt;40</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_13l2zx1">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_01909qh">
+          <text>"Medium"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0291dl4">
+        <inputEntry id="UnaryTests_1rftpho">
+          <text>&lt;18</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1m2md1b">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_01gsmlo">
+          <text>"Lisinopril"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0chcg94">
+          <text>"COVID-19"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_01m8nc2">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0wkt08m">
+          <text>true</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0emie8z">
+          <text>]18..60[</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0j7jvt0">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1h4ofad">
+          <text>"Low"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0gomjv1">
+        <inputEntry id="UnaryTests_0qe07vv">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0jbagjh">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1ihfu5o">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1jfkf2a">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0ffngis">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_09088r2">
+          <text>false</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1fv06tr">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1av0por">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1vl9bdx">
+          <text>"Ineligible"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <inputData id="InputData_0oibox9" name="Age" />
+  <inputData id="InputData_11fj34g" name="PreExistingConditions" />
+  <inputData id="InputData_1c809b5" name="PreviousVaccinations" />
+  <inputData id="InputData_1qdzhw1" name="FamilyMedicalHistory" />
+  <inputData id="InputData_0w49nft" name="ConsentFormSigned" />
+  <inputData id="InputData_1hyqwyg" name="CurrentMedications" />
+  <inputData id="InputData_1qdpr7v" name="AgeAgain" />
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="Decision_mnyntvs">
+        <dc:Bounds height="80" width="180" x="470" y="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_0jnapvz" dmnElementRef="InputData_0oibox9">
+        <dc:Bounds height="45" width="125" x="117" y="278" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_09w6ecd" dmnElementRef="InputData_11fj34g">
+        <dc:Bounds height="45" width="125" x="307" y="278" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_095gfx3" dmnElementRef="InputData_1c809b5">
+        <dc:Bounds height="45" width="125" x="587" y="278" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_04gibz9" dmnElementRef="InputData_1qdzhw1">
+        <dc:Bounds height="45" width="125" x="727" y="278" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_0t3zpuy" dmnElementRef="InputData_0w49nft">
+        <dc:Bounds height="45" width="125" x="878" y="278" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_07kv6d6" dmnElementRef="InformationRequirement_0n411u1">
+        <di:waypoint x="180" y="278" />
+        <di:waypoint x="493" y="180" />
+        <di:waypoint x="493" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_0cnhorl" dmnElementRef="InformationRequirement_1x5p1vk">
+        <di:waypoint x="370" y="278" />
+        <di:waypoint x="538" y="180" />
+        <di:waypoint x="538" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_0yv0nup" dmnElementRef="InformationRequirement_1htwj9q">
+        <di:waypoint x="650" y="278" />
+        <di:waypoint x="583" y="180" />
+        <di:waypoint x="583" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_0nh2kek" dmnElementRef="InformationRequirement_00fhksf">
+        <di:waypoint x="790" y="278" />
+        <di:waypoint x="605" y="180" />
+        <di:waypoint x="605" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_0u12rh8" dmnElementRef="InformationRequirement_0sarzba">
+        <di:waypoint x="941" y="278" />
+        <di:waypoint x="628" y="180" />
+        <di:waypoint x="628" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="DMNShape_1dva07g" dmnElementRef="InputData_1hyqwyg">
+        <dc:Bounds height="45" width="125" x="447" y="278" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_1aacg6v" dmnElementRef="InformationRequirement_1dqat2o">
+        <di:waypoint x="510" y="278" />
+        <di:waypoint x="560" y="180" />
+        <di:waypoint x="560" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="DMNShape_0pflrr8" dmnElementRef="InputData_1qdpr7v">
+        <dc:Bounds height="45" width="125" x="208" y="368" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_15zf9hp" dmnElementRef="InformationRequirement_043bn6o">
+        <di:waypoint x="271" y="368" />
+        <di:waypoint x="515" y="180" />
+        <di:waypoint x="515" y="160" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

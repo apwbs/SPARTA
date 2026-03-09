@@ -3,10 +3,9 @@ namespace VaccineDispatch {
     import Oasis.Attributes.*
 
     attribute Country{id="Country" category=environmentCat type=string}
-    attribute Company{id="Company" category=environmentCat type=string}
  
     condition isMedicalHub Role=="MedicalHub" and Country=="Italy"
-    condition cond Country=="Italy" and (Role=="Professor" or (Role=="Student" and Company=="Sapienza"))
+    condition cond Country=="Italy" and (Role=="MedicalHub" or Role=="VaccinationCenter")
 
     category AggregationSpecCat = "VaccineDispatch.AggregationSpec"
     obligation AggregationSpec = "VaccineDispatch.AggregationSpec"
@@ -18,16 +17,38 @@ namespace VaccineDispatch {
     
         apply denyUnlessPermit
     
-        rule accessDecision {
+        rule accessDecisionWithAggregation {
             permit
             condition isMedicalHub 
-        } 
+        }
 
         on permit {
             obligation AggregationSpec {
                 meanAge = "filteredPatients: Patient[ConsentFormSigned = true and contains(FamilyMedicalHistory, 'Heart Disease') and (Age <= 38 or (Age > 40 and contains(PreExistingConditions, 'Diabetes'))) and contains(PreviousVaccinations, 'COVID-19')], meanAge: mean(filteredPatients.Age)"
                 sumAge  = "filteredPatients: Patient[ConsentFormSigned = true], sumAge: sum(filteredPatients.Age)"
             } 
+        }
+    }
+
+    policy PatientPrioritizationMultipleOutputs {
+        target clause Action=="PatientPrioritizationMultipleOutputs(Patient)"
+    
+        apply denyUnlessPermit
+    
+        rule accessDecision {
+            permit
+            condition isMedicalHub 
+        }
+    }
+
+    policy PatientPrioritizationRE {
+        target clause Action=="PatientPrioritizationRE(Patient)"
+    
+        apply denyUnlessPermit
+    
+        rule accessDecision {
+            permit
+            condition isMedicalHub 
         }
     }
 

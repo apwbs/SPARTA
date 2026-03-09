@@ -311,42 +311,16 @@ func readQueue() {
 
 func handleFunction(functionName string, payload map[string]string) string {
 	switch functionName {
-	case "PriorityRE":
-		return decidePatientPrioritizationWithAggrHandler(payload)
-	case "setWritePatientData":
-		return setWritePatientDataHandler(payload)
+	case "PatientPrioritizationWithAggr":
+		return PatientPrioritizationWithAggrHandler(payload)
+	case "PatientPrioritizationMultipleOutputs":
+		return PatientPrioritizationMultipleOutputsHandler(payload)
+	case "PatientPrioritizationRE":
+		return PatientPrioritizationREHandler(payload)
+	case "WritePatientData":
+		return WritePatientDataHandler(payload)
 	default:
 		return "Unknown function: " + functionName
 	}
 }
 
-func decidePatientPrioritizationWithAggrHandler(payload map[string]string) string {
-	certificate, functionName, ipnsKey, _ := interfaceISGoMiddleware.ParseDecisionRequestFromQueue(payload)
-	certificateValidity, attributes := interfaceISGoMiddleware.CheckCertificate(certificate)
-	if certificateValidity {
-		callable := interfaceISGoMiddleware.CheckCallability(`{accessPolicy: (Role = "MedicalHub" and Country = "Italy")}`, attributes)
-		if callable {
-			interfaceISGoMiddleware.Decision(functionName, "PatientLight", ipnsKey+"Light")
-			return "Decision performed successfully"
-		}
-		return "Access policy not satisfied"
-	}
-	return "Invalid certificate"
-}
-				
-func setWritePatientDataHandler(payload map[string]string) string {
-	certificate, _, fileBytes, _, ipnsKey, _ := interfaceISGoMiddleware.ParseSetRequestFromQueueBytes(payload)
-	certificateValidity, attributes := interfaceISGoMiddleware.CheckCertificate(certificate)
-	if certificateValidity {
-		// callable := interfaceISGoMiddleware.CheckCallability(`{accessPolicy: (Country = "Italy" and (Role = "Professor" or (Role = "Student" and Company = "Sapienza")))}`, attributes)
-		callable := interfaceISGoMiddleware.CheckCallability(`{accessPolicy: (Role = "MedicalHub" and Country = "Italy")}`, attributes)
-		if callable {
-			interfaceISGoMiddleware.EncryptAndUploadLinkedBytes(fileBytes, "Patient", ipnsKey)
-			interfaceISGoMiddleware.EncryptAndUploadLinkedBytes(fileBytes, "PatientLight", ipnsKey+"Light")
-			return "Encryption of document performed successfully"
-		}
-		return "Access policy not satisfied"
-	}
-	return "Invalid certificate"
-}
-				

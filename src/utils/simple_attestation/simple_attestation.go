@@ -294,14 +294,14 @@ func loadPEM(filename string) ([]byte, error) {
 }
 
 func validateAttributes(attributes string) error {
-	// Check if "certified=TEE<number>" exists in the attributes
-	pattern := `certified=TEE\d+`
+	// Check if "certified=CCU<number>" exists in the attributes
+	pattern := `certified=CCU\d+`
 	matched, err := regexp.MatchString(pattern, attributes)
 	if err != nil {
 		return fmt.Errorf("error matching attributes pattern: %v", err)
 	}
 	if !matched {
-		return errors.New("attributes validation failed: required 'certified=TEE<number>' not found")
+		return errors.New("attributes validation failed: required 'certified=CCU<number>' not found")
 	}
 	return nil
 }
