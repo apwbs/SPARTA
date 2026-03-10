@@ -11,6 +11,7 @@ import (
 
 	teeReceiver "sparta/src/tee/receiver"
 	teeSender "sparta/src/tee/sender"
+	blockchain "sparta/src/utils/interaction"
 )
 
 // waitForPeer blocks until the peer is up (we just need /caCert to respond).
@@ -45,9 +46,22 @@ func main() {
 	exchangeSeed := flag.Bool("exchange_seed", false, "bootstrap mode: exchange shared seed with peer")
 	seedRole := flag.Int("seed_role", 1, "seed sender selector: 1=teeserver sends, 2=tee sends")
 
+	// blockchain mode flag
+	doBlockchain := flag.Bool("blockchain", false, "call blockchain.SetAllIPNSKeys and exit")
+
 	flag.Parse()
 
-	// Bootstrap vs normal daemon
+	// 1) BLOCKCHAIN mode: do it and exit (no measurement needed)
+	if *doBlockchain {
+		if err := blockchain.SetAllIPNSKeys(); err != nil {
+			fmt.Println("[blockchain] Error:", err)
+			os.Exit(1)
+		}
+		fmt.Println("[blockchain] Done.")
+		return
+	}
+
+	// 2) Bootstrap vs normal daemon
 	if *exchangeSeed {
 		// bootstrap requires measurement
 		if *measurement == "" {

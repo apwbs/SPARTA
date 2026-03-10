@@ -8,6 +8,12 @@
  "securityVersion": 1,
  "mounts": [
 		{
+			"source": "./.env",
+			"target": "/.env",
+			"type": "hostfs",
+			"readOnly": false
+		},
+		{
 			"source": "./privkey",
 			"target": "/privkey",
 			"type": "hostfs",
