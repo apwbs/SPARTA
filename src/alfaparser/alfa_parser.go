@@ -83,44 +83,62 @@ func main() {
 
 	// fmt.Println("\n========== Generating code ==========")
 
-	receiverPath := "../teeserver/receiver/teeserver_receiver.go"
-	desobjPath := "../teeserver/receiver/desobj.go"
+	receiverPaths := []string{
+		"../teeserver/receiver/teeserver_receiver.go",
+		"../tee/receiver/tee_receiver.go",
+	}
 
-	handleFn, desobjCode, err := GenerateHandleFunctionAndDesobj(policySet, receiverPath)
+	desobjPaths := []string{
+		"../teeserver/receiver/desobj.go",
+		"../tee/receiver/desobj.go",
+	}
+
+	// Generate handle function once.
+	// We use the first receiver path only to let GenerateHandleFunctionAndDesobj build it.
+	handleFn, _, err := GenerateHandleFunctionAndDesobj(policySet, receiverPaths[0])
 	if err != nil {
 		fmt.Println("Error generating code:", err)
 		return
 	}
 
-	// 1) Load existing teeserver_receiver.go
-	receiverBytes, err := os.ReadFile(receiverPath)
-	if err != nil {
-		fmt.Println("Error reading receiver file:", err)
-		return
-	}
-	receiverSrc := string(receiverBytes)
+	// Update both receiver files
+	for _, receiverPath := range receiverPaths {
+		receiverBytes, err := os.ReadFile(receiverPath)
+		if err != nil {
+			fmt.Println("Error reading receiver file:", receiverPath, err)
+			return
+		}
+		receiverSrc := string(receiverBytes)
 
-	// 2) Replace placeholder handleFunction
-	updatedReceiver, err := ReplaceHandleFunction(receiverSrc, handleFn)
-	if err != nil {
-		fmt.Println("Error replacing handleFunction:", err)
-		return
-	}
+		updatedReceiver, err := ReplaceHandleFunction(receiverSrc, handleFn)
+		if err != nil {
+			fmt.Println("Error replacing handleFunction in", receiverPath, ":", err)
+			return
+		}
 
-	// 3) Write back teeserver_receiver.go
-	if err := os.WriteFile(receiverPath, []byte(updatedReceiver), 0644); err != nil {
-		fmt.Println("Error writing updated receiver file:", err)
-		return
-	}
+		if err := os.WriteFile(receiverPath, []byte(updatedReceiver), 0644); err != nil {
+			fmt.Println("Error writing updated receiver file:", receiverPath, err)
+			return
+		}
 
-	// 4) Write desobj.go
-	if err := os.WriteFile(desobjPath, []byte(desobjCode), 0644); err != nil {
-		fmt.Println("Error writing desobj.go:", err)
-		return
+		fmt.Println("Updated:", receiverPath)
 	}
 
-	fmt.Println("Updated:", receiverPath)
-	fmt.Println("Generated:", desobjPath)
+	// Generate and write desobj.go for each receiver package
+	for i, receiverPath := range receiverPaths {
+		_, desobjCode, err := GenerateHandleFunctionAndDesobj(policySet, receiverPath)
+		if err != nil {
+			fmt.Println("Error generating desobj for", receiverPath, ":", err)
+			return
+		}
+
+		if err := os.WriteFile(desobjPaths[i], []byte(desobjCode), 0644); err != nil {
+			fmt.Println("Error writing", desobjPaths[i], ":", err)
+			return
+		}
+
+		fmt.Println("Generated:", desobjPaths[i])
+	}
 }
 
 func ReplaceHandleFunction(receiverSrc, newHandleFunction string) (string, error) {
@@ -749,7 +767,7 @@ func %s(payload map[string]string) string {
 		callable := interfaceISGoMiddleware.CheckCallability(`+"`{accessPolicy: %s}`"+`, attributes)
 		if callable {
 			Additionals := make(map[string]interface{})
-			structSliceInterface, _, _ := interfaceISGoMiddleware.RetrieveStructSliceLinkedLog(%q, ipnsKey)
+			structSliceInterface, _ := interfaceISGoMiddleware.RetrieveStructSliceLinkedLog(%q, ipnsKey)
 			structSlice, ok := structSliceInterface.(reflect.Value)
 			if !ok {
 				structSlice = reflect.ValueOf(structSliceInterface)
@@ -758,7 +776,7 @@ func %s(payload map[string]string) string {
 				}
 			}
 			%s
-			structSliceInterfaceForDecision, _, _ := interfaceISGoMiddleware.RetrieveStructSliceLinkedLog(%q, ipnsKey+"Light")
+			structSliceInterfaceForDecision, _ := interfaceISGoMiddleware.RetrieveStructSliceLinkedLog(%q, ipnsKey+"Light")
 			structSliceForDecision, okForDecision := structSliceInterfaceForDecision.(reflect.Value)
 			if !okForDecision {
 				structSliceForDecision = reflect.ValueOf(structSliceInterfaceForDecision)
@@ -766,7 +784,7 @@ func %s(payload map[string]string) string {
 					return "Error: Retrieved data is not a slice"
 				}
 			}
-			interfaceISGoMiddleware.DecisionWithAggregation(functionName, structSliceForDecision, Additionals, _, _, ipnsKey)
+			interfaceISGoMiddleware.DecisionWithAggregation(functionName, structSliceForDecision, Additionals, ipnsKey)
 			return "Decision performed successfully"
 		}
 		return "Access policy not satisfied"

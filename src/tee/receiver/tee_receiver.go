@@ -3,6 +3,7 @@ package tee_receiver
 import (
 	"crypto/sha256"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,16 +16,32 @@ import (
 	seedGeneration "sparta/src/utils/seedGenerator"
 
 	"github.com/edgelesssys/ego/enclave"
+	"github.com/go-redis/redis/v8"
 )
+	
+const (
+	requestQueue  = "request_queue"
+	responseQueue = "response_queue"
+)
+
+// Global Redis client
+var redisClient *redis.Client
+
+func init() {
+	redisClient = redis.NewClient(&redis.Options{
+		Addr: "localhost:6379", // Redis server address
+	})
+}
 
 type TEEReceiver struct {
 	server *http.Server
 }
 
 var (
-	teeServerMeasurement string = ""
+	teeMeasurement string = ""
 	seedExchangeEnabled  bool   = false
 )
+
 
 func StartTEE(exchangeSeed bool) *TEEReceiver {
 	seedExchangeEnabled = exchangeSeed
@@ -32,7 +49,6 @@ func StartTEE(exchangeSeed bool) *TEEReceiver {
 	var cert []byte
 	var priv interface{}
 
-	// Choose certificate creation mode
 	if seedExchangeEnabled {
 		cert, priv = interfaceISGoMiddleware.CreateBootstrapCertificate()
 		fmt.Println("Using BOOTSTRAP certificate (seed not required).")
@@ -61,21 +77,24 @@ func StartTEE(exchangeSeed bool) *TEEReceiver {
 		os.Exit(1)
 	}
 
+	// HTTP handlers
 	handler := http.NewServeMux()
+
+	// Remote attestation endpoints
 	handler.HandleFunc("/caCert", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Sending CA certificate")
-		w.Write(caCert)
+		_, _ = w.Write(caCert)
 	})
 	handler.HandleFunc("/cert", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Sending RA certificate")
-		w.Write(cert)
+		_, _ = w.Write(cert)
 	})
 	handler.HandleFunc("/report", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Sending report")
-		w.Write(report)
+		_, _ = w.Write(report)
 	})
 
-	// Only allow /secret in bootstrap mode
+	// Seed exchange endpoint (gated inside handleKey)
 	handler.HandleFunc("/secret", s.handleKey)
 
 	tlsCfg := tls.Config{
@@ -87,6 +106,13 @@ func StartTEE(exchangeSeed bool) *TEEReceiver {
 		},
 	}
 
+	// Start processing requests from middleware ONLY in normal mode
+	if !seedExchangeEnabled {
+		go readQueue()
+	} else {
+		fmt.Println("BOOTSTRAP mode: readQueue() NOT started (waiting for /secret).")
+	}
+
 	s.server = &http.Server{
 		Addr:      "0.0.0.0:8078",
 		TLSConfig: &tlsCfg,
@@ -95,9 +121,10 @@ func StartTEE(exchangeSeed bool) *TEEReceiver {
 	return s
 }
 
+// Start sets the expected peer measurement (used by VerifyTEE) and starts HTTPS server.
 func (s *TEEReceiver) Start(measurement string) error {
 	fmt.Println("TEE Server Receiver started")
-	teeServerMeasurement = measurement
+	teeMeasurement = measurement
 	return s.server.ListenAndServeTLS("", "")
 }
 
@@ -110,6 +137,14 @@ func (s *TEEReceiver) Stop() {
 	_ = s.server.Close()
 }
 
+func (s *TEEReceiver) StartNoMeasurement() error {
+	fmt.Println("TEE Server Receiver started (normal mode, no peer measurement)")
+	return s.server.ListenAndServeTLS("", "")
+}
+
+// -------------------------
+// Seed exchange receiver
+// -------------------------
 func (s *TEEReceiver) handleKey(w http.ResponseWriter, r *http.Request) {
 	// Gate seed exchange endpoint
 	if !seedExchangeEnabled {
@@ -118,7 +153,7 @@ func (s *TEEReceiver) handleKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify the peer TEE
-	valid := teeRequester.VerifyTEE(teeServerMeasurement, false)
+	valid := teeRequester.VerifyTEE(teeMeasurement, false)
 	if !valid {
 		http.Error(w, "TEE verification failed", http.StatusUnauthorized)
 		return
@@ -196,3 +231,79 @@ func (s *TEEReceiver) handleKey(w http.ResponseWriter, r *http.Request) {
 	// Then stop the HTTPS server so Start() returns and main unblocks on <-done
 	go s.Stop()
 }
+
+// -------------------------
+// Redis request processing
+// -------------------------
+type EncryptedPayload struct {
+	ClientID string `json:"client_id"`
+	Data     string `json:"data"`
+}
+
+type ClientPayload struct {
+	FunctionName    string `json:"function_name"`
+	Certificate     string `json:"certificate"`
+	EncryptedData   string `json:"encrypted_data"`
+	FileExtension   string `json:"file_extension"`
+	IPNSKey         string `json:"ipns_key"`
+	ClientPublicKey string `json:"client_public_key"`
+	Signature       string `json:"signature"`
+}
+
+type QueuePayload struct {
+	ClientID string        `json:"client_id"`
+	Data     ClientPayload `json:"data"`
+}
+
+func readQueue() {
+	for {
+		res, err := redisClient.BRPop(redisClient.Context(), 0, requestQueue).Result()
+		if err != nil {
+			fmt.Printf("[Server] Error dequeuing request: %!v(MISSING)\n", err)
+			continue
+		}
+
+		var payload QueuePayload
+		if err := json.Unmarshal([]byte(res[1]), &payload); err != nil {
+			fmt.Printf("[Server] Error parsing payload: %!v(MISSING)\n", err)
+			continue
+		}
+
+		response := handleFunction(payload.Data.FunctionName, map[string]string{
+			"function_name":     payload.Data.FunctionName,
+			"certificate":       payload.Data.Certificate,
+			"encrypted_data":    payload.Data.EncryptedData,
+			"file_extension":    payload.Data.FileExtension,
+			"ipns_key":          payload.Data.IPNSKey,
+			"client_public_key": payload.Data.ClientPublicKey,
+			"signature":         payload.Data.Signature,
+		})
+
+		responsePayload, _ := json.Marshal(map[string]string{
+			"client_id": payload.ClientID,
+			"response":  response,
+		})
+		if err := redisClient.LPush(redisClient.Context(), responseQueue, responsePayload).Err(); err != nil {
+			fmt.Printf("[Server] Error enqueuing response: %v\n", err)
+		} else {
+			fmt.Printf("[Server] Enqueued response for client: %s\n", payload.ClientID)
+			fmt.Println("----------------------------------------------------------------------------------------------------------------------------")
+		}
+	}
+}
+
+func handleFunction(functionName string, payload map[string]string) string {
+	switch functionName {
+	case "PatientPrioritizationWithAggr":
+		return PatientPrioritizationWithAggrHandler(payload)
+	case "PatientPrioritizationMultipleOutputs":
+		return PatientPrioritizationMultipleOutputsHandler(payload)
+	case "PatientPrioritizationRE":
+		return PatientPrioritizationREHandler(payload)
+	case "WritePatientData":
+		return WritePatientDataHandler(payload)
+	default:
+		return "Unknown function: " + functionName
+	}
+}
+

@@ -43,21 +43,6 @@ var (
 )
 
 
-// StartUSGonServer now supports BOTH modes:
-//
-// - exchangeSeed=true  => BOOTSTRAP mode:
-//     * uses CreateBootstrapCertificate() (no seed needed)
-//     * exposes /secret endpoint (to receive the seed)
-//     * DOES NOT start readQueue() because normal workload assumes the deterministic cert/seed exists
-//
-// - exchangeSeed=false => NORMAL mode:
-//     * uses CreateCertificate() (seed required)
-//     * /secret is disabled
-//     * starts readQueue()
-
-// StartTEE creates the enclave HTTPS server.
-// - exchangeSeed=true  => BOOTSTRAP cert + /secret enabled
-// - exchangeSeed=false => NORMAL deterministic cert + /secret disabled
 func StartTEE(exchangeSeed bool) *USGonServerReceiver {
 	seedExchangeEnabled = exchangeSeed
 
@@ -152,8 +137,6 @@ func (s *USGonServerReceiver) Stop() {
 	_ = s.server.Close()
 }
 
-// StartNoMeasurement starts the HTTPS server without setting any expected peer measurement.
-// Use this in normal "daemon" mode where we just wait for requests.
 func (s *USGonServerReceiver) StartNoMeasurement() error {
 	fmt.Println("TEE Server Receiver started (normal mode, no peer measurement)")
 	return s.server.ListenAndServeTLS("", "")

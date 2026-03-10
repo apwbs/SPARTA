@@ -87,14 +87,11 @@ func main() {
 
 		var err error
 		if *exchangeSeed {
-			// bootstrap: you DO want measurement checking
+			// bootstrap with measurement checking
 			err = receiver.Start(*measurement)
 		} else {
-			// normal daemon: start without measurement checks
-			// You must implement StartNoMeasurement() in the receiver package.
+			// normal start without measurement checks
 			err = receiver.StartNoMeasurement()
-			// If you prefer, and Start("") is acceptable in your receiver:
-			// err = receiver.Start("")
 		}
 
 		// server.Close() triggers http.ErrServerClosed (normal)
@@ -118,7 +115,7 @@ func main() {
 
 			teeServerSender.SendSeed(*measurement, false)
 
-			// Sender side done: stop our server and exit.
+			// Sender side done: stop server and exit.
 			fmt.Println("BOOTSTRAP complete (sender): stopping.")
 			receiver.Stop()
 

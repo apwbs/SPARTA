@@ -41,25 +41,27 @@ func waitForPeer(url string, timeout time.Duration) error {
 func main() {
 	fmt.Println("starting")
 
-	measurement := flag.String("measurement", "", "expected measurement of the peer TEE")
+	measurement := flag.String("measurement", "", "expected measurement of the peer TEE (required only with -exchange_seed)")
 	exchangeSeed := flag.Bool("exchange_seed", false, "bootstrap mode: exchange shared seed with peer")
 	seedRole := flag.Int("seed_role", 1, "seed sender selector: 1=teeserver sends, 2=tee sends")
 
 	flag.Parse()
 
-	if *measurement == "" {
-		fmt.Println("Error: -measurement is required.")
-		os.Exit(1)
-	}
-
+	// Bootstrap vs normal daemon
 	if *exchangeSeed {
+		// bootstrap requires measurement
+		if *measurement == "" {
+			fmt.Println("Error: -measurement is required when using -exchange_seed")
+			os.Exit(1)
+		}
 		if *seedRole != 1 && *seedRole != 2 {
 			fmt.Println("Error: invalid -seed_role. Use 1 (teeserver sends) or 2 (tee sends).")
 			os.Exit(1)
 		}
 		fmt.Printf("BOOTSTRAP: exchange_seed enabled (seed_role=%d)\n", *seedRole)
 	} else {
-		fmt.Println("NORMAL: seed exchange disabled (expects seed already present).")
+		// normal mode: no measurement required
+		fmt.Println("NORMAL: starting server and waiting for requests.")
 	}
 
 	// Start receiver inside enclave (bootstrap cert if exchangeSeed=true).
@@ -68,7 +70,16 @@ func main() {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		err := receiver.Start(*measurement)
+
+		var err error
+		if *exchangeSeed {
+			// bootstrap with measurement checking
+			err = receiver.Start(*measurement)
+		} else {
+			// normal start without measurement checks
+			err = receiver.StartNoMeasurement()
+		}
+
 		// server.Close() triggers http.ErrServerClosed (normal)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			fmt.Println("Server error:", err)
