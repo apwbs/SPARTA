@@ -45,7 +45,7 @@ func mustGetEnv(key string) (string, error) {
 }
 
 func getPrivateKeyNo0x() (string, error) {
-	pk, err := mustGetEnv("BLOCKCHAIN_PRIVATE_KEY")
+	pk, err := mustGetEnv("CCU_BLOCKCHAIN_PRIVATE_KEY")
 	if err != nil {
 		return "", err
 	}

@@ -86,21 +86,21 @@ upsert_env() {
 
   # Main
   if [[ "$has_main" == true ]]; then
-    sed -i.bak "s|^${VAR_MAIN}=.*$|${VAR_MAIN}=${KEY_ID}|" "$env_file"
+    sed -i.bak "s|^${VAR_MAIN}=.*$|${VAR_MAIN}=\"${KEY_ID}\"|" "$env_file"
   else
-    echo "${VAR_MAIN}=${KEY_ID}" >> "$env_file"
+    echo "${VAR_MAIN}=\"${KEY_ID}\"" >> "$env_file"
   fi
 
   # Light
   if [[ "$has_light" == true ]]; then
-    sed -i.bak "s|^${VAR_LIGHT}=.*$|${VAR_LIGHT}=${LIGHT_ID}|" "$env_file"
+    sed -i.bak "s|^${VAR_LIGHT}=.*$|${VAR_LIGHT}=\"${LIGHT_ID}\"|" "$env_file"
   else
-    echo "${VAR_LIGHT}=${LIGHT_ID}" >> "$env_file"
+    echo "${VAR_LIGHT}=\"${LIGHT_ID}\"" >> "$env_file"
   fi
 
   echo "Updated $env_file:"
-  echo "  $VAR_MAIN=$KEY_ID"
-  echo "  $VAR_LIGHT=$LIGHT_ID"
+  echo "  $VAR_MAIN=\"$KEY_ID\""
+  echo "  $VAR_LIGHT=\"$LIGHT_ID\""
 }
 
 for ENV_FILE in ../src/teeserver/.env ../src/tee/.env; do
