@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"flag"
 	"regexp"
 	"sort"
 	"strings"
@@ -34,10 +35,16 @@ type PolicySet struct {
 const mandatoryImport = "import Oasis.Attributes.*"
 
 func main() {
-	filePath := "policy.alfa"
+	alfaScriptPath := flag.String("alfa_script", "", "path to the ALFA policy file")
+	flag.Parse()
+
+	if *alfaScriptPath == "" {
+		fmt.Println("Error: -alfa_script is required")
+		os.Exit(1)
+	}
 
 	// Parse
-	policySet, err := parsePolicySet(filePath)
+	policySet, err := parsePolicySet(*alfaScriptPath)
 	if err != nil {
 		fmt.Println("Error parsing policy set:", err)
 		return
@@ -94,7 +101,6 @@ func main() {
 	}
 
 	// Generate handle function once.
-	// We use the first receiver path only to let GenerateHandleFunctionAndDesobj build it.
 	handleFn, _, err := GenerateHandleFunctionAndDesobj(policySet, receiverPaths[0])
 	if err != nil {
 		fmt.Println("Error generating code:", err)

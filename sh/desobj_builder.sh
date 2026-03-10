@@ -5,19 +5,19 @@ set -euo pipefail
 cd ../src/alfaparser
 
 usage() {
-  echo "Usage: $0 --policy <path_to_policy.alfa>"
+  echo "Usage: $0 --alfa_script <path_to_policy.alfa>"
   echo "Example:"
-  echo "  $0 --policy ../src/alfaparser/policy.alfa"
+  echo "  $0 --alfa_script ../src/alfaparser/policy.alfa"
   exit 1
 }
 
-POLICY_PATH=""
+ALFA_SCRIPT_PATH=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --policy|-p)
+    --alfa_script)
       [[ $# -ge 2 ]] || usage
-      POLICY_PATH="$2"
+      ALFA_SCRIPT_PATH="$2"
       shift 2
       ;;
     -h|--help)
@@ -30,19 +30,19 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$POLICY_PATH" ]]; then
-  echo "Error: --policy is required"
+if [[ -z "$ALFA_SCRIPT_PATH" ]]; then
+  echo "Error: --alfa_script is required"
   usage
 fi
 
 # Resolve to absolute path before we run Go (because we cd)
-if [[ "$POLICY_PATH" != /* ]]; then
-  POLICY_PATH="$(cd ../../sh && pwd)/$POLICY_PATH"
+if [[ "$ALFA_SCRIPT_PATH" != /* ]]; then
+  ALFA_SCRIPT_PATH="$(cd ../../sh && pwd)/$ALFA_SCRIPT_PATH"
 fi
 
-if [[ ! -f "$POLICY_PATH" ]]; then
-  echo "Error: policy file not found: $POLICY_PATH"
+if [[ ! -f "$ALFA_SCRIPT_PATH" ]]; then
+  echo "Error: policy file not found: $ALFA_SCRIPT_PATH"
   exit 1
 fi
 
-exec go run alfa_parser.go -policy "$POLICY_PATH"
+exec go run alfa_parser.go -alfa_script "$ALFA_SCRIPT_PATH"
