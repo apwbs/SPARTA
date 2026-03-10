@@ -44,7 +44,7 @@ func main() {
 
 	measurement := flag.String("measurement", "", "expected measurement of the peer TEE (required only with -exchange_seed)")
 	exchangeSeed := flag.Bool("exchange_seed", false, "bootstrap mode: exchange shared seed with peer")
-	seedRole := flag.Int("seed_role", 1, "seed sender selector: 1=teeserver sends, 2=tee sends")
+	seedRole := flag.Int("seed_role", 2, "seed sender selector: 1=teeserver sends, 2=tee sends")
 
 	// blockchain mode flag
 	doBlockchain := flag.Bool("blockchain", false, "call blockchain.SetAllIPNSKeys and exit")

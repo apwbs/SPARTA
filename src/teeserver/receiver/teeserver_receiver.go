@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	teeRequester "sparta/src/teeserver/requester"
+	teeServerRequester "sparta/src/teeserver/requester"
 	"sparta/src/utils/interfaceISGoMiddleware"
 	"sparta/src/utils/sealing"
 	seedGeneration "sparta/src/utils/seedGenerator"
@@ -153,7 +153,7 @@ func (s *USGonServerReceiver) handleKey(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Verify the peer TEE
-	valid := teeRequester.VerifyTEE(teeServerMeasurement, false)
+	valid := teeServerRequester.VerifyTEE(teeServerMeasurement, false)
 	if !valid {
 		http.Error(w, "TEE verification failed", http.StatusUnauthorized)
 		return
