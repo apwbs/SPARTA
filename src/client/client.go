@@ -33,7 +33,7 @@ func main() {
 	inputFiles := flag.String("input_file", "", "path to JSON input file")
 	processInstanceID := flag.String("process_id", "", "process instance ID")
 	messageID := flag.String("message_id", "", "message ID")
-	functionName := flag.String("fu", "", "function to call")
+	functionName := flag.String("function", "", "function to call")
 	measurement := flag.String("measurement", "", "expected measurement of the server tee")
 	certificate := flag.String("certificate", "", "path to certificate file")
 	ipnsKey := flag.String("ipnsKey", "", "path to certificate file")
