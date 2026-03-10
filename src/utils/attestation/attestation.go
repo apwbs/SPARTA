@@ -27,6 +27,7 @@ import (
 func RemoteAttestation(serverAddr string, expectedMeasurement []byte, expectedPeerPubKeyPath string) ([]byte, []byte) {
 	tlsConfig := &tls.Config{InsecureSkipVerify: true} // Skip TLS verification temporarily
 	caCertBytes := httpGet(tlsConfig, serverAddr+"/caCert")
+	fmt.Println("/caCert ricevuto durante attestation")
 
 	isValid, attributes, certPublicKey := checkCertificate(caCertBytes, expectedPeerPubKeyPath)
 	if !isValid {
