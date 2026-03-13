@@ -13,7 +13,7 @@ If you liked our approach, are using it as a building block of your tool or are 
 Please find the BibTeX below for convenience:
 ```
 @misc{marangone2025teebasedapproachsecurityprivacy,
-      title={A TEE-based Approach for Security and Privacy in Decision Support}, 
+      title={A {TEE}-based Approach for Security and Privacy in Decision Support}, 
       author={Edoardo Marangone and Eugenio Nerio Nemmi and Daniele Friolo and Giuseppe Ateniese and Ingo Weber and Claudio Di Ciccio},
       year={2025},
       eprint={2509.02413},
