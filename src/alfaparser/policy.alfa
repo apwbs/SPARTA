@@ -9,11 +9,10 @@ namespace VaccineDispatch {
 
     category AggregationSpecCat = "VaccineDispatch.AggregationSpec"
     obligation AggregationSpec = "VaccineDispatch.AggregationSpec"
-    attribute meanAge{id="meanAge" category=AggregationSpecCat type=string}
-    attribute sumAge{id="sumAge" category=AggregationSpecCat type=string}
+    attribute stockCoverageDays{id="stockCoverageDays" category=AggregationSpecCat type=string}
  
-    policy PatientPrioritizationWithAggr {
-        target clause Action=="PatientPrioritizationWithAggr(Patient,meanAge,sumAge)"
+    policy PatientPriorityWAggr {
+        target clause Action=="PatientPriorityWAggr(Patient,stockCoverageDays)"
     
         apply denyUnlessPermit
     
@@ -24,11 +23,11 @@ namespace VaccineDispatch {
 
         on permit {
             obligation AggregationSpec {
-                meanAge = "filteredPatients: Patient[ConsentFormSigned = true and contains(FamilyMedicalHistory, 'Heart Disease') and (Age <= 38 or (Age > 40 and contains(PreExistingConditions, 'Diabetes'))) and contains(PreviousVaccinations, 'COVID-19')], meanAge: mean(filteredPatients.Age)"
-                sumAge  = "filteredPatients: Patient[ConsentFormSigned = true], sumAge: sum(filteredPatients.Age)"
+                stockCoverageDays = "{totalAvailableVaccines: sum(medicalHub.QuantityAvailable), activeCenters: vaccinationCenters[VaccinationProgress > 0], totalDailyVaccinations: sum(activeCenters.VaccinationProgress), stockCoverageDays: totalAvailableVaccines / totalDailyVaccinations}.stockCoverageDays"
             } 
         }
     }
+    
 
     policy PatientPrioritizationMultipleOutputs {
         target clause Action=="PatientPrioritizationMultipleOutputs(Patient)"
@@ -41,8 +40,8 @@ namespace VaccineDispatch {
         }
     }
 
-    policy PatientPrioritizationRE {
-        target clause Action=="PatientPrioritizationRE(Patient)"
+    policy PatientPrioritizationRunningExamplePaper {
+        target clause Action=="PatientPrioritizationRunningExamplePaper(Patient)"
     
         apply denyUnlessPermit
     

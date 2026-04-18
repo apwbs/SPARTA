@@ -876,17 +876,17 @@ func executeMethod(method reflect.Value, structSlice reflect.Value, ipnsKey, fun
 
 	// Second loop: Measure time for calling the function
 	start111 := time.Now()
-	// for i := 0; i < len(argsList); i++ {
-	// 	_ = method.Call(argsList[i])
-	// }
 	for i := 0; i < len(argsList); i++ {
-		fmt.Printf("Result for input #%d:\n", i)
-		results := method.Call(argsList[i])
-		for j, result := range results {
-			fmt.Printf("  [%d] %v\n", j, result.Interface())
-		}
-		fmt.Println(strings.Repeat("-", 40))
+		_ = method.Call(argsList[i])
 	}
+	// for i := 0; i < len(argsList); i++ {
+	// 	fmt.Printf("Result for input #%d:\n", i)
+	// 	results := method.Call(argsList[i])
+	// 	for j, result := range results {
+	// 		fmt.Printf("  [%d] %v\n", j, result.Interface())
+	// 	}
+	// 	fmt.Println(strings.Repeat("-", 40))
+	// }
 	elapsed111 := time.Since(start111)
 	fmt.Printf("Total time taken for method.Call(args): %s\n", elapsed111)
 
@@ -895,6 +895,248 @@ func executeMethod(method reflect.Value, structSlice reflect.Value, ipnsKey, fun
 	return "All decisions made"
 }
 
+// func DecisionWithAggregation(functionName string, structSlice reflect.Value, additional map[string]interface{}, ipnsKey string) string {
+// 	// Ensure structSlice is a slice
+// 	if structSlice.Kind() != reflect.Slice {
+// 		fmt.Println("Error: structSlice is not a slice")
+// 		return "error: structSlice is not a slice"
+// 	}
+
+// 	// // First Attempt: Try Rules2425262728Aggregation{}
+// 	// m1 := decisionFunctions.Rules2425262728Aggregation{}
+// 	// value1 := reflect.ValueOf(m1)
+// 	// method1 := value1.MethodByName(functionName)
+
+// 	// if method1.IsValid() {
+// 	// 	fmt.Println("Found method in Rules2425262728Aggregation{}")
+// 	// 	return executeMethodWithAggregation(method1, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // First Attempt: Try Rules8WithAggregation{}
+// 	// m8 := decisionFunctions.Rules8WithAggregation{}
+// 	// value8 := reflect.ValueOf(m8)
+// 	// method8 := value8.MethodByName(functionName)
+
+// 	// if method8.IsValid() {
+// 	// 	fmt.Println("Found method in Rules8WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method8, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // First Attempt: Try Rules9WithAggregation{}
+// 	// m9 := decisionFunctions.Rules9WithAggregation{}
+// 	// value9 := reflect.ValueOf(m9)
+// 	// method9 := value9.MethodByName(functionName)
+
+// 	// if method9.IsValid() {
+// 	// 	fmt.Println("Found method in Rules9WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method9, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // First Attempt: Try Rules10WithAggregation{}
+// 	// m10 := decisionFunctions.Rules10WithAggregation{}
+// 	// value10 := reflect.ValueOf(m10)
+// 	// method10 := value10.MethodByName(functionName)
+
+// 	// if method10.IsValid() {
+// 	// 	fmt.Println("Found method in Rules10WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method10, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // First Attempt: Try Rules11WithAggregation{}
+// 	// m11 := decisionFunctions.Rules11WithAggregation{}
+// 	// value11 := reflect.ValueOf(m11)
+// 	// method11 := value11.MethodByName(functionName)
+
+// 	// if method11.IsValid() {
+// 	// 	fmt.Println("Found method in Rules11WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method11, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // First Attempt: Try Rules12WithAggregation{}
+// 	// m12 := decisionFunctions.Rules12WithAggregation{}
+// 	// value12 := reflect.ValueOf(m12)
+// 	// method12 := value12.MethodByName(functionName)
+
+// 	// if method12.IsValid() {
+// 	// 	fmt.Println("Found method in Rules12WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method12, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // First Attempt: Try Rules13WithAggregation{}
+// 	// m13 := decisionFunctions.Rules13WithAggregation{}
+// 	// value13 := reflect.ValueOf(m13)
+// 	// method13 := value13.MethodByName(functionName)
+
+// 	// if method13.IsValid() {
+// 	// 	fmt.Println("Found method in Rules13WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method13, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // First Attempt: Try Rules14WithAggregation{}
+// 	// m14 := decisionFunctions.Rules14WithAggregation{}
+// 	// value14 := reflect.ValueOf(m14)
+// 	// method14 := value14.MethodByName(functionName)
+
+// 	// if method14.IsValid() {
+// 	// 	fmt.Println("Found method in Rules14WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method14, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // First Attempt: Try Rules15WithAggregation{}
+// 	// m15 := decisionFunctions.Rules15WithAggregation{}
+// 	// value15 := reflect.ValueOf(m15)
+// 	// method15 := value15.MethodByName(functionName)
+
+// 	// if method15.IsValid() {
+// 	// 	fmt.Println("Found method in Rules15WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method15, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // First Attempt: Try Rules16WithAggregation{}
+// 	// m16 := decisionFunctions.Rules16WithAggregation{}
+// 	// value16 := reflect.ValueOf(m16)
+// 	// method16 := value16.MethodByName(functionName)
+
+// 	// if method16.IsValid() {
+// 	// 	fmt.Println("Found method in Rules16WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method16, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // Second Attempt: Try Rules17WithAggregation{}
+// 	// m17 := decisionFunctions.Rules17WithAggregation{}
+// 	// value17 := reflect.ValueOf(m17)
+// 	// method17 := value17.MethodByName(functionName)
+
+// 	// if method17.IsValid() {
+// 	// 	fmt.Println("Found method in Rules17WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method17, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // Second Attempt: Try Rules18WithAggregation{}
+// 	// m18 := decisionFunctions.Rules18WithAggregation{}
+// 	// value18 := reflect.ValueOf(m18)
+// 	// method18 := value18.MethodByName(functionName)
+
+// 	// if method18.IsValid() {
+// 	// 	fmt.Println("Found method in Rules18WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method18, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // Second Attempt: Try Rules19WithAggregation{}
+// 	// m19 := decisionFunctions.Rules19WithAggregation{}
+// 	// value19 := reflect.ValueOf(m19)
+// 	// method19 := value19.MethodByName(functionName)
+
+// 	// if method19.IsValid() {
+// 	// 	fmt.Println("Found method in Rules19WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method19, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // Third Attempt: Try Rules20WithAggregation{}
+// 	// m20 := decisionFunctions.Rules20WithAggregation{}
+// 	// value20 := reflect.ValueOf(m20)
+// 	// method20 := value20.MethodByName(functionName)
+
+// 	// if method20.IsValid() {
+// 	// 	fmt.Println("Found method in Rules20WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method20, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // Third Attempt: Try Rules21WithAggregation{}
+// 	// m21 := decisionFunctions.Rules21WithAggregation{}
+// 	// value21 := reflect.ValueOf(m21)
+// 	// method21 := value21.MethodByName(functionName)
+
+// 	// if method21.IsValid() {
+// 	// 	fmt.Println("Found method in Rules21WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method21, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // Third Attempt: Try Rules22WithAggregation{}
+// 	// m22 := decisionFunctions.Rules22WithAggregation{}
+// 	// value22 := reflect.ValueOf(m22)
+// 	// method22 := value22.MethodByName(functionName)
+
+// 	// if method22.IsValid() {
+// 	// 	fmt.Println("Found method in Rules22WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method22, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // Third Attempt: Try Rules23WithAggregation{}
+// 	// m23 := decisionFunctions.Rules23WithAggregation{}
+// 	// value23 := reflect.ValueOf(m23)
+// 	// method23 := value23.MethodByName(functionName)
+
+// 	// if method23.IsValid() {
+// 	// 	fmt.Println("Found method in Rules23WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method23, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // Third Attempt: Try Rules24WithAggregation{}
+// 	// m24 := decisionFunctions.Rules24WithAggregation{}
+// 	// value24 := reflect.ValueOf(m24)
+// 	// method24 := value24.MethodByName(functionName)
+
+// 	// if method24.IsValid() {
+// 	// 	fmt.Println("Found method in Rules24WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method24, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // Third Attempt: Try Rules25WithAggregation{}
+// 	// m25 := decisionFunctions.Rules25WithAggregation{}
+// 	// value25 := reflect.ValueOf(m25)
+// 	// method25 := value25.MethodByName(functionName)
+
+// 	// if method25.IsValid() {
+// 	// 	fmt.Println("Found method in Rules25WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method25, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // Third Attempt: Try Rules26WithAggregation{}
+// 	// m26 := decisionFunctions.Rules26WithAggregation{}
+// 	// value26 := reflect.ValueOf(m26)
+// 	// method26 := value26.MethodByName(functionName)
+
+// 	// if method26.IsValid() {
+// 	// 	fmt.Println("Found method in Rules26WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method26, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // Third Attempt: Try Rules27WithAggregation{}
+// 	// m27 := decisionFunctions.Rules27WithAggregation{}
+// 	// value27 := reflect.ValueOf(m27)
+// 	// method27 := value27.MethodByName(functionName)
+
+// 	// if method27.IsValid() {
+// 	// 	fmt.Println("Found method in Rules27WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method27, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // Third Attempt: Try Rules28WithAggregation{}
+// 	// m28 := decisionFunctions.Rules28WithAggregation{}
+// 	// value28 := reflect.ValueOf(m28)
+// 	// method28 := value28.MethodByName(functionName)
+
+// 	// if method28.IsValid() {
+// 	// 	fmt.Println("Found method in Rules28WithAggregation{}")
+// 	// 	return executeMethodWithAggregation(method28, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// // Fourth Attempt: Try SeventhMy{}
+// 	// m4 := decisionFunctions.SeventhMy{}
+// 	// value4 := reflect.ValueOf(m4)
+// 	// method4 := value4.MethodByName(functionName)
+
+// 	// if method4.IsValid() {
+// 	// 	fmt.Println("Found method in SeventhMy{}")
+// 	// 	return executeMethodWithAggregation(method4, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
+// 	// }
+
+// 	// If no valid method is found
+// 	fmt.Println("Error: Method not found in any struct!")
+// 	return "Error: Method not found"
+// }
+
 func DecisionWithAggregation(functionName string, structSlice reflect.Value, additional map[string]interface{}, ipnsKey string) string {
 	// Ensure structSlice is a slice
 	if structSlice.Kind() != reflect.Slice {
@@ -902,315 +1144,160 @@ func DecisionWithAggregation(functionName string, structSlice reflect.Value, add
 		return "error: structSlice is not a slice"
 	}
 
-	// // First Attempt: Try Rules2425262728Aggregation{}
-	// m1 := decisionFunctions.Rules2425262728Aggregation{}
-	// value1 := reflect.ValueOf(m1)
-	// method1 := value1.MethodByName(functionName)
+	// Lookup receiver for this decision
+	recv, ok := decisionFunctions.DecisionRegistry[functionName]
+	if !ok {
+		fmt.Println("Error: decision not registered:", functionName)
+		return "Error: Method not found"
+	}
 
-	// if method1.IsValid() {
-	// 	fmt.Println("Found method in Rules2425262728Aggregation{}")
-	// 	return executeMethodWithAggregation(method1, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
+	// Lookup method on receiver
+	method := reflect.ValueOf(recv).MethodByName(functionName)
+	if !method.IsValid() {
+		fmt.Println("Error: method not found on registered receiver:", functionName)
+		return "Error: Method not found"
+	}
 
-	// // First Attempt: Try Rules8WithAggregation{}
-	// m8 := decisionFunctions.Rules8WithAggregation{}
-	// value8 := reflect.ValueOf(m8)
-	// method8 := value8.MethodByName(functionName)
-
-	// if method8.IsValid() {
-	// 	fmt.Println("Found method in Rules8WithAggregation{}")
-	// 	return executeMethodWithAggregation(method8, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // First Attempt: Try Rules9WithAggregation{}
-	// m9 := decisionFunctions.Rules9WithAggregation{}
-	// value9 := reflect.ValueOf(m9)
-	// method9 := value9.MethodByName(functionName)
-
-	// if method9.IsValid() {
-	// 	fmt.Println("Found method in Rules9WithAggregation{}")
-	// 	return executeMethodWithAggregation(method9, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // First Attempt: Try Rules10WithAggregation{}
-	// m10 := decisionFunctions.Rules10WithAggregation{}
-	// value10 := reflect.ValueOf(m10)
-	// method10 := value10.MethodByName(functionName)
-
-	// if method10.IsValid() {
-	// 	fmt.Println("Found method in Rules10WithAggregation{}")
-	// 	return executeMethodWithAggregation(method10, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // First Attempt: Try Rules11WithAggregation{}
-	// m11 := decisionFunctions.Rules11WithAggregation{}
-	// value11 := reflect.ValueOf(m11)
-	// method11 := value11.MethodByName(functionName)
-
-	// if method11.IsValid() {
-	// 	fmt.Println("Found method in Rules11WithAggregation{}")
-	// 	return executeMethodWithAggregation(method11, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // First Attempt: Try Rules12WithAggregation{}
-	// m12 := decisionFunctions.Rules12WithAggregation{}
-	// value12 := reflect.ValueOf(m12)
-	// method12 := value12.MethodByName(functionName)
-
-	// if method12.IsValid() {
-	// 	fmt.Println("Found method in Rules12WithAggregation{}")
-	// 	return executeMethodWithAggregation(method12, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // First Attempt: Try Rules13WithAggregation{}
-	// m13 := decisionFunctions.Rules13WithAggregation{}
-	// value13 := reflect.ValueOf(m13)
-	// method13 := value13.MethodByName(functionName)
-
-	// if method13.IsValid() {
-	// 	fmt.Println("Found method in Rules13WithAggregation{}")
-	// 	return executeMethodWithAggregation(method13, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // First Attempt: Try Rules14WithAggregation{}
-	// m14 := decisionFunctions.Rules14WithAggregation{}
-	// value14 := reflect.ValueOf(m14)
-	// method14 := value14.MethodByName(functionName)
-
-	// if method14.IsValid() {
-	// 	fmt.Println("Found method in Rules14WithAggregation{}")
-	// 	return executeMethodWithAggregation(method14, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // First Attempt: Try Rules15WithAggregation{}
-	// m15 := decisionFunctions.Rules15WithAggregation{}
-	// value15 := reflect.ValueOf(m15)
-	// method15 := value15.MethodByName(functionName)
-
-	// if method15.IsValid() {
-	// 	fmt.Println("Found method in Rules15WithAggregation{}")
-	// 	return executeMethodWithAggregation(method15, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // First Attempt: Try Rules16WithAggregation{}
-	// m16 := decisionFunctions.Rules16WithAggregation{}
-	// value16 := reflect.ValueOf(m16)
-	// method16 := value16.MethodByName(functionName)
-
-	// if method16.IsValid() {
-	// 	fmt.Println("Found method in Rules16WithAggregation{}")
-	// 	return executeMethodWithAggregation(method16, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // Second Attempt: Try Rules17WithAggregation{}
-	// m17 := decisionFunctions.Rules17WithAggregation{}
-	// value17 := reflect.ValueOf(m17)
-	// method17 := value17.MethodByName(functionName)
-
-	// if method17.IsValid() {
-	// 	fmt.Println("Found method in Rules17WithAggregation{}")
-	// 	return executeMethodWithAggregation(method17, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // Second Attempt: Try Rules18WithAggregation{}
-	// m18 := decisionFunctions.Rules18WithAggregation{}
-	// value18 := reflect.ValueOf(m18)
-	// method18 := value18.MethodByName(functionName)
-
-	// if method18.IsValid() {
-	// 	fmt.Println("Found method in Rules18WithAggregation{}")
-	// 	return executeMethodWithAggregation(method18, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // Second Attempt: Try Rules19WithAggregation{}
-	// m19 := decisionFunctions.Rules19WithAggregation{}
-	// value19 := reflect.ValueOf(m19)
-	// method19 := value19.MethodByName(functionName)
-
-	// if method19.IsValid() {
-	// 	fmt.Println("Found method in Rules19WithAggregation{}")
-	// 	return executeMethodWithAggregation(method19, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // Third Attempt: Try Rules20WithAggregation{}
-	// m20 := decisionFunctions.Rules20WithAggregation{}
-	// value20 := reflect.ValueOf(m20)
-	// method20 := value20.MethodByName(functionName)
-
-	// if method20.IsValid() {
-	// 	fmt.Println("Found method in Rules20WithAggregation{}")
-	// 	return executeMethodWithAggregation(method20, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // Third Attempt: Try Rules21WithAggregation{}
-	// m21 := decisionFunctions.Rules21WithAggregation{}
-	// value21 := reflect.ValueOf(m21)
-	// method21 := value21.MethodByName(functionName)
-
-	// if method21.IsValid() {
-	// 	fmt.Println("Found method in Rules21WithAggregation{}")
-	// 	return executeMethodWithAggregation(method21, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // Third Attempt: Try Rules22WithAggregation{}
-	// m22 := decisionFunctions.Rules22WithAggregation{}
-	// value22 := reflect.ValueOf(m22)
-	// method22 := value22.MethodByName(functionName)
-
-	// if method22.IsValid() {
-	// 	fmt.Println("Found method in Rules22WithAggregation{}")
-	// 	return executeMethodWithAggregation(method22, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // Third Attempt: Try Rules23WithAggregation{}
-	// m23 := decisionFunctions.Rules23WithAggregation{}
-	// value23 := reflect.ValueOf(m23)
-	// method23 := value23.MethodByName(functionName)
-
-	// if method23.IsValid() {
-	// 	fmt.Println("Found method in Rules23WithAggregation{}")
-	// 	return executeMethodWithAggregation(method23, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // Third Attempt: Try Rules24WithAggregation{}
-	// m24 := decisionFunctions.Rules24WithAggregation{}
-	// value24 := reflect.ValueOf(m24)
-	// method24 := value24.MethodByName(functionName)
-
-	// if method24.IsValid() {
-	// 	fmt.Println("Found method in Rules24WithAggregation{}")
-	// 	return executeMethodWithAggregation(method24, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // Third Attempt: Try Rules25WithAggregation{}
-	// m25 := decisionFunctions.Rules25WithAggregation{}
-	// value25 := reflect.ValueOf(m25)
-	// method25 := value25.MethodByName(functionName)
-
-	// if method25.IsValid() {
-	// 	fmt.Println("Found method in Rules25WithAggregation{}")
-	// 	return executeMethodWithAggregation(method25, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // Third Attempt: Try Rules26WithAggregation{}
-	// m26 := decisionFunctions.Rules26WithAggregation{}
-	// value26 := reflect.ValueOf(m26)
-	// method26 := value26.MethodByName(functionName)
-
-	// if method26.IsValid() {
-	// 	fmt.Println("Found method in Rules26WithAggregation{}")
-	// 	return executeMethodWithAggregation(method26, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // Third Attempt: Try Rules27WithAggregation{}
-	// m27 := decisionFunctions.Rules27WithAggregation{}
-	// value27 := reflect.ValueOf(m27)
-	// method27 := value27.MethodByName(functionName)
-
-	// if method27.IsValid() {
-	// 	fmt.Println("Found method in Rules27WithAggregation{}")
-	// 	return executeMethodWithAggregation(method27, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // Third Attempt: Try Rules28WithAggregation{}
-	// m28 := decisionFunctions.Rules28WithAggregation{}
-	// value28 := reflect.ValueOf(m28)
-	// method28 := value28.MethodByName(functionName)
-
-	// if method28.IsValid() {
-	// 	fmt.Println("Found method in Rules28WithAggregation{}")
-	// 	return executeMethodWithAggregation(method28, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// // Fourth Attempt: Try SeventhMy{}
-	// m4 := decisionFunctions.SeventhMy{}
-	// value4 := reflect.ValueOf(m4)
-	// method4 := value4.MethodByName(functionName)
-
-	// if method4.IsValid() {
-	// 	fmt.Println("Found method in SeventhMy{}")
-	// 	return executeMethodWithAggregation(method4, structSlice, additional, decryptionTime, aggregationTime, ipnsKey)
-	// }
-
-	// If no valid method is found
-	fmt.Println("Error: Method not found in any struct!")
-	return "Error: Method not found"
+	fmt.Println("Found method via DecisionRegistry:", functionName)
+	return executeMethodWithAggregation(method, structSlice, additional, ipnsKey)
 }
 
 // Helper function to execute the method dynamically with aggregation
-func executeMethodWithAggregation(method reflect.Value, structSlice reflect.Value, additional map[string]interface{}, decryptionTime, aggregationTime time.Duration, ipnsKey string) string {
-	// Prepare argument list
-	argsList := make([][]reflect.Value, structSlice.Len())
+func executeMethodWithAggregation(method reflect.Value, structSlice reflect.Value, additional map[string]interface{}, ipnsKey string) string {
+	// Use append so invalid entries are skipped cleanly
+	argsList := make([][]reflect.Value, 0, structSlice.Len())
 
-	// First loop: Prepare arguments
+	// First loop: prepare arguments
 	for i := 0; i < structSlice.Len(); i++ {
-		// Get struct element at index i
 		dataInput := structSlice.Index(i).Interface()
 
-		// Create inputs dynamically and handle errors
 		inputs, err := isgonHelper.CreateInputsFromDataInput(dataInput)
 		if err != nil {
 			fmt.Println("Error creating inputs:", err)
-			continue // Skip iteration on error
+			continue
 		}
 
-		// Merge additional parameters if provided
 		if additional != nil {
 			inputs = isgonHelper.MergeMaps(inputs, additional)
-			// fmt.Printf("Merged Inputs at index [%d]: %+v\n", i, inputs)
-			// fmt.Printf("Merged Inputs at index [%d]: %+v\n", i, len(inputs))
 		}
 
-		// Store valid input arguments
 		inputValue := reflect.ValueOf(inputs)
 		if inputValue.IsValid() {
-			argsList[i] = []reflect.Value{inputValue}
+			argsList = append(argsList, []reflect.Value{inputValue})
 		}
 	}
 
-	var numKeys int
-
-	for i := 0; i < len(argsList); i++ {
-		for _, val := range argsList[i] {
-			if vMap, ok := val.Interface().(map[string]interface{}); ok {
-				numKeys = len(vMap)
-				break
-			}
-		}
-		if numKeys > 0 {
-			break
+	// Optional: inspect number of keys in the first valid entry
+	numKeys := 0
+	if len(argsList) > 0 {
+		firstArg := argsList[0][0].Interface()
+		vMap, ok := firstArg.(map[string]interface{})
+		if ok {
+			numKeys = len(vMap)
 		}
 	}
 
-	// fmt.Printf("🔢 Number of keys in the first entry: %d\n", numKeys)
-	// fmt.Printf("The keys are: %v\n", argsList[0][0].Interface())
-
-	// Second loop: Execute method calls and measure time
 	startTime := time.Now()
 	for i := 0; i < len(argsList); i++ {
 		_ = method.Call(argsList[i])
 	}
 	elapsedTime := time.Since(startTime)
 
-	// Log execution time
 	fmt.Printf("Total time taken for method.Call(args): %s\n", elapsedTime)
 	fmt.Println("len of structSlice:", structSlice.Len())
+	fmt.Println("num keys in first merged input:", numKeys)
 
 	parts := strings.Split(ipnsKey, "_")
-	numColumns, _ := strconv.Atoi(parts[2])
-
-	structSliceLen := structSlice.Len()
-	resultValueCheck := structSliceLen == numColumns
+	resultValueCheck := false
+	if len(parts) > 2 {
+		numColumns, err := strconv.Atoi(parts[2])
+		if err == nil {
+			resultValueCheck = structSlice.Len() == numColumns
+		}
+	}
 
 	red := "\033[31m"
 	reset := "\033[0m"
-
 	fmt.Println(red+"len of struct equal to number of rows of the key:"+reset, strconv.FormatBool(resultValueCheck))
-
 	fmt.Println("----------------------------------------------------------------------------------------------------------------------------")
 
 	return "All patient priorities processed"
 }
+
+// // Helper function to execute the method dynamically with aggregation
+// func executeMethodWithAggregation(method reflect.Value, structSlice reflect.Value, additional map[string]interface{}, decryptionTime, aggregationTime time.Duration, ipnsKey string) string {
+// 	// Prepare argument list
+// 	argsList := make([][]reflect.Value, structSlice.Len())
+
+// 	// First loop: Prepare arguments
+// 	for i := 0; i < structSlice.Len(); i++ {
+// 		// Get struct element at index i
+// 		dataInput := structSlice.Index(i).Interface()
+
+// 		// Create inputs dynamically and handle errors
+// 		inputs, err := isgonHelper.CreateInputsFromDataInput(dataInput)
+// 		if err != nil {
+// 			fmt.Println("Error creating inputs:", err)
+// 			continue // Skip iteration on error
+// 		}
+
+// 		// Merge additional parameters if provided
+// 		if additional != nil {
+// 			inputs = isgonHelper.MergeMaps(inputs, additional)
+// 			// fmt.Printf("Merged Inputs at index [%d]: %+v\n", i, inputs)
+// 			// fmt.Printf("Merged Inputs at index [%d]: %+v\n", i, len(inputs))
+// 		}
+
+// 		// Store valid input arguments
+// 		inputValue := reflect.ValueOf(inputs)
+// 		if inputValue.IsValid() {
+// 			argsList[i] = []reflect.Value{inputValue}
+// 		}
+// 	}
+
+// 	var numKeys int
+
+// 	for i := 0; i < len(argsList); i++ {
+// 		for _, val := range argsList[i] {
+// 			if vMap, ok := val.Interface().(map[string]interface{}); ok {
+// 				numKeys = len(vMap)
+// 				break
+// 			}
+// 		}
+// 		if numKeys > 0 {
+// 			break
+// 		}
+// 	}
+
+// 	// fmt.Printf("🔢 Number of keys in the first entry: %d\n", numKeys)
+// 	// fmt.Printf("The keys are: %v\n", argsList[0][0].Interface())
+
+// 	// Second loop: Execute method calls and measure time
+// 	startTime := time.Now()
+// 	for i := 0; i < len(argsList); i++ {
+// 		_ = method.Call(argsList[i])
+// 	}
+// 	elapsedTime := time.Since(startTime)
+
+// 	// Log execution time
+// 	fmt.Printf("Total time taken for method.Call(args): %s\n", elapsedTime)
+// 	fmt.Println("len of structSlice:", structSlice.Len())
+
+// 	parts := strings.Split(ipnsKey, "_")
+// 	numColumns, _ := strconv.Atoi(parts[2])
+
+// 	structSliceLen := structSlice.Len()
+// 	resultValueCheck := structSliceLen == numColumns
+
+// 	red := "\033[31m"
+// 	reset := "\033[0m"
+
+// 	fmt.Println(red+"len of struct equal to number of rows of the key:"+reset, strconv.FormatBool(resultValueCheck))
+
+// 	fmt.Println("----------------------------------------------------------------------------------------------------------------------------")
+
+// 	return "All patient priorities processed"
+// }
 
 func NewPerformAggregation(feelExpr string, structSlice reflect.Value) (float64, time.Duration, error) {
 

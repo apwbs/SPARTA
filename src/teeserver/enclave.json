@@ -2,7 +2,7 @@
  "exe": "main",
  "key": "private.pem",
  "debug": true,
- "heapSize": 512,
+ "heapSize": 2020,
  "executableHeap": false,
  "productID": 1,
  "securityVersion": 1,

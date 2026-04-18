@@ -105,7 +105,7 @@ func handleClient(conn net.Conn, wg *sync.WaitGroup) {
 
 	// Poll response from Redis
 	for {
-		res, err := redisClient.BRPop(redisClient.Context(), 10*time.Second, responseQueue).Result()
+		res, err := redisClient.BRPop(redisClient.Context(), 30*time.Second, responseQueue).Result()
 		if err != nil {
 			fmt.Printf("[Middleware] Timeout or error while waiting for response: %v\n", err)
 			conn.Write([]byte("Timeout waiting for response."))
