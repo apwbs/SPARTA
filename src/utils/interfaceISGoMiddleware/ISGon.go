@@ -615,13 +615,20 @@ type SimpleBatch struct {
 func EncryptAndUploadLinkedBytes(fileBytes []byte, structName, ipnsKey string) {
 	sh := shell.NewShell("localhost:5001")
 
-	// Retrieve the publicKey from IPNS
-	publicKeyIPNS := ipfs.RetrieveKey(sh, ipnsKey)
-	if publicKeyIPNS == "" {
-		fmt.Println("Error: could not retrieve IPNS key")
+	// // Retrieve the publicKey from IPNS
+	// publicKeyIPNS := ipfs.RetrieveKey(sh, ipnsKey)
+	// if publicKeyIPNS == "" {
+	// 	fmt.Println("Error: could not retrieve IPNS key")
+	// 	return
+	// }
+	// fmt.Println("IPNS Key Retrieved:", publicKeyIPNS)
+
+	blockchainKeyIPNS, _ := blockchain.GetIPNSKey(ipnsKey)
+	if blockchainKeyIPNS == "" {
+		fmt.Println("failed to retrieve public key for keyName: %s", ipnsKey)
 		return
 	}
-	fmt.Println("IPNS Key Retrieved:", publicKeyIPNS)
+	fmt.Println("blockchainKeyIPNS:", blockchainKeyIPNS)
 
 	// Step 1: Parse input data
 	structType, exists := structs.StructRegistry[structName]
@@ -675,7 +682,7 @@ func EncryptAndUploadLinkedBytes(fileBytes []byte, structName, ipnsKey string) {
 	fmt.Printf("Encryption time: %s\n", encryptionTime)
 
 	// Step 3: Create chained batch
-	prevCID, _ := ipfs.RetrieveFromIPNS(sh, publicKeyIPNS)
+	prevCID, _ := ipfs.RetrieveFromIPNS(sh, blockchainKeyIPNS)
 	fmt.Println("Batch CID from IPNS:", prevCID)
 
 	batch := SimpleBatch{
@@ -698,7 +705,7 @@ func EncryptAndUploadLinkedBytes(fileBytes []byte, structName, ipnsKey string) {
 	fmt.Println("Uploaded batch CID:", cid)
 
 	// Update IPNS
-	if err := ipfs.UploadToIPNS(sh, cid, publicKeyIPNS); err != nil {
+	if err := ipfs.UploadToIPNS(sh, cid, blockchainKeyIPNS); err != nil {
 		fmt.Println("IPNS update failed:", err)
 		return
 	}
