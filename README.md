@@ -17,10 +17,10 @@ Please find the BibTeX below for convenience:
   title     = {A Secure, Confidential, and Verifiable Decision Support System},
   year      = {2026},
   pages     = {233--253},
-  booktitle	= {Computer Security - {ESORICS} 2026 - 31st European Symposium on Research in Computer Security, Rome, Italy, September 14-18, 2026, Proceedings, Part {II}},
-  doi		= {10.1007/978-3-032-38695-3_12},
-  publisher	= {Springer},
-  series	= {Lecture Notes in Computer Science},
-  volume	= {16969},
+  booktitle = {Computer Security - {ESORICS} 2026 - 31st European Symposium on Research in Computer Security, Rome, Italy, September 14-18, 2026, Proceedings, Part {II}},
+  doi       = {10.1007/978-3-032-38695-3_12},
+  publisher = {Springer},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {16969},
 }
 ```
