@@ -12,14 +12,15 @@ For a detailed documentation and step-by-step tutorial to run this version local
 If you liked our approach, are using it as a building block of your tool or are considering it for your related work, feel free and welcome to cite our manuscript!
 Please find the BibTeX below for convenience:
 ```
-@misc{marangone2026secureconfidentialverifiabledecision,
-      title={A Secure, Confidential, and Verifiable Decision Support System}, 
-      author={Edoardo Marangone and Eugenio Nerio Nemmi and Daniele Friolo and Giuseppe Ateniese and Ingo Weber and Claudio Di Ciccio},
-      year={2026},
-      eprint={2509.02413},
-      archivePrefix={arXiv},
-      primaryClass={cs.CR},
-      url={https://arxiv.org/abs/2509.02413},
-      note={Accepted for publication at ESORICS 2026}
+@InProceedings{Marangone.etal/ESORICS2026:SecureConfidentialVerifiableDSS,
+  author    = {Marangone, Edoardo and Nemmi, Eugenio Nerio and Friolo, Daniele and Ateniese, Giuseppe and Weber, Ingo and Di Ciccio, Claudio},
+  title     = {A Secure, Confidential, and Verifiable Decision Support System},
+  year      = {2026},
+  pages     = {233--253},
+  booktitle	= {Computer Security - {ESORICS} 2026 - 31st European Symposium on Research in Computer Security, Rome, Italy, September 14-18, 2026, Proceedings, Part {II}},
+  doi		= {10.1007/978-3-032-38695-3_12},
+  publisher	= {Springer},
+  series	= {Lecture Notes in Computer Science},
+  volume	= {16969},
 }
 ```
